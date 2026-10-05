@@ -128,7 +128,7 @@ import com.haooz.chedule.ui.components.LocalLandRipple
 import com.haooz.chedule.ui.components.ScheduleBottomBar
 import com.haooz.chedule.ui.components.ScheduleTopBar
 import com.haooz.chedule.ui.components.ShareImportDialog
-import com.haooz.chedule.ui.components.UpdateDialog
+// [单人自用版] 已移除 UpdateDialog 引用
 import com.haooz.chedule.ui.effects.motion.OobeCubicOutEasing
 import com.haooz.chedule.ui.effects.motion.OobeQuartOutEasing
 import com.haooz.chedule.ui.screens.AddCourseDialog
@@ -3942,7 +3942,7 @@ fun CourseScheduleApp(privacyConsented: Boolean = true) {
                         liquidGlassBackdrop = liquidGlassBackdrop,
                     )
 
-                    UpdateDialog(liquidGlassBackdrop = liquidGlassBackdrop)
+                    // [单人自用版] 已移除自动更新弹窗
 
                     val showJumpWeekDialog by viewModel.showJumpWeekDialog.collectAsState()
                     var jumpWeekTemp by remember { mutableIntStateOf(1) }

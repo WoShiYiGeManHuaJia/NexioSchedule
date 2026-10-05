@@ -170,6 +170,8 @@ fun HolidaySettingsScreen(
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var dialogType by remember { mutableIntStateOf(HolidayManager.TYPE_HOLIDAY) }
+    var smartText by remember { mutableStateOf("") }
+    var smartHint by remember { mutableStateOf("") }
     var editingEntry by remember { mutableStateOf<HolidayManager.Entry?>(null) }
     var editingEntryStorageYear by remember { mutableIntStateOf(year) }
     var name by remember { mutableStateOf("") }
@@ -522,6 +524,106 @@ fun HolidaySettingsScreen(
                     liquidGlassBackdrop = liquidGlassBackdrop,
                     onYearChange = onYearChange,
                 )
+            }
+
+            item {
+                SectionTitleRow(
+                    text = "一句话添加",
+                    description = "• 直接输入中文说明，自动识别是放假还是调休
+" +
+                        "• 放假：10月1日到10月7日放假
+" +
+                        "• 调休：10月11日补10月7日的课",
+                    liquidGlassBackdrop = liquidGlassBackdrop,
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    insideMargin = PaddingValues(12.dp),
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        androidx.compose.material3.OutlinedTextField(
+                            value = smartText,
+                            onValueChange = { smartText = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                androidx.compose.material3.Text(
+                                    "例：10月1日到10月7日放假",
+                                    fontSize = 14.sp,
+                                )
+                            },
+                            maxLines = 3,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ArrowPreference(
+                            title = "识别并添加",
+                            summary = smartHint.ifBlank { "支持放假区间与调休补课" },
+                            onClick = {
+                                val parsed = com.haooz.chedule.data.SmartHolidayParser
+                                    .parse(smartText, year)
+                                if (parsed == null) {
+                                    smartHint = "没看懂，换个说法试试"
+                                    Toast.makeText(
+                                        context,
+                                        "没看懂，试试「10月1日到10月7日放假」或「10月11日补10月7日的课」",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                    return@ArrowPreference
+                                }
+                                val entryYear = parsed.startDate.take(4).toIntOrNull() ?: year
+                                var fw = -1
+                                var fwd = -1
+                                if (parsed.type == HolidayManager.TYPE_WORKSWAP &&
+                                    parsed.followDate != null
+                                ) {
+                                    val fd = LocalDate.parse(parsed.followDate)
+                                    fw = weekOfDate(fd.year, fd.monthValue, fd.dayOfMonth)
+                                        .toIntOrNull() ?: 1
+                                    fwd = fd.dayOfWeek.value
+                                }
+                                val newEntry = HolidayManager.Entry(
+                                    date = parsed.startDate,
+                                    endDate = parsed.endDate,
+                                    name = parsed.name,
+                                    type = parsed.type,
+                                    followWeek = fw,
+                                    followWeekday = fwd,
+                                    custom = true,
+                                )
+                                val saved = HolidayManager.updateEntries(
+                                    context, setOf(entryYear)
+                                ) { current ->
+                                    val updated = current
+                                        .mapValues { it.value.toMutableList() }
+                                        .toMutableMap()
+                                    val all = updated.getValue(entryYear)
+                                    if (parsed.type == HolidayManager.TYPE_WORKSWAP) {
+                                        updated[entryYear] =
+                                            HolidayManager.withoutCustomWorkSwapsOnDate(
+                                                all, parsed.startDate
+                                            ).toMutableList()
+                                    }
+                                    updated.getValue(entryYear).add(newEntry)
+                                    updated.mapValues { (_, e) -> e.toList() }
+                                }
+                                if (!saved) {
+                                    Toast.makeText(
+                                        context, "节假日数据无法读取，未覆盖原数据",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                    return@ArrowPreference
+                                }
+                                reload()
+                                CourseReminderHelper.onHolidayDataChanged(context)
+                                smartHint = parsed.summary
+                                smartText = ""
+                                Toast.makeText(
+                                    context, "已添加：${parsed.summary}",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            },
+                        )
+                    }
+                }
             }
 
             item {

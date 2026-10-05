@@ -79,6 +79,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -1405,7 +1406,6 @@ fun MainScheduleScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Spacer(modifier = Modifier.height(if (isTablet) 56.dp else 58.dp))
                 coursesToShow.forEachIndexed { index, course ->
                     val summaryText = buildString {
                         append(course.getWeekText())
@@ -1488,25 +1488,47 @@ fun MainScheduleScreen(
                             }
                         }
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        // 单人自用版：居中排布，教室放大为主信息，老师降为次要
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 18.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (isCurrentWeekCourse) course.name else "${course.name}（非本周）",
+                                style = MiuixTheme.textStyles.body1.copy(fontSize = 19.sp),
+                                fontWeight = FontWeight.Medium,
+                                color = MiuixTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "${course.getWeekText()} ｜ ${course.getTimeDisplayText()}",
+                                style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                textAlign = TextAlign.Center
+                            )
+                            if (course.classroom.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(14.dp))
                                 Text(
-                                    text = if (isCurrentWeekCourse) course.name else "${course.name}（非本周）",
-                                    style = MiuixTheme.textStyles.body1.copy(fontSize = 17.sp),
-                                    fontWeight = FontWeight.Medium,
-                                    color = MiuixTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = summaryText,
-                                    style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
-                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                    text = course.classroom,
+                                    style = MiuixTheme.textStyles.body1.copy(fontSize = 26.sp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MiuixTheme.colorScheme.primary,
+                                    textAlign = TextAlign.Center
                                 )
                             }
+                            if (course.teacher.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = course.teacher,
+                                    style = MiuixTheme.textStyles.body2.copy(fontSize = 12.sp),
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.7f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(14.dp))
                             Box(
                                 modifier = Modifier
                                     .clip(ContinuousRoundedRectangle(20.dp))
@@ -1534,7 +1556,6 @@ fun MainScheduleScreen(
                     }
                     } // Column (isHidden)
                 }
-                Spacer(modifier = Modifier.height(if (isTablet) 0.dp else 260.dp))
             }
         }
         // show 状态下沉到子作用域：顶层读会在点卡片那帧重组整页，压在弹窗动画头两帧
@@ -1785,37 +1806,15 @@ private fun CourseDetailSheet(
     content: @Composable () -> Unit,
 ) {
     var show by showState
-    // 重建时若已打开则跳过进入动画；关闭后重置
-    var skipSheetEnterAnimation by remember { mutableStateOf(show) }
-    LaunchedEffect(show) {
-        if (!show) {
-            skipSheetEnterAnimation = false
-        }
-    }
-    if (isTablet) {
-        BlurBottomSheetTablet(
-            show = show,
-            title = "课程详情",
-            dimBackground = true,
-            isBottomAligned = true,
-            onDismissRequest = onDismiss,
-            liquidGlassBackdrop = liquidGlassBackdrop,
-            endAction = endAction,
-            skipEnterAnimation = skipSheetEnterAnimation,
-            content = content,
-        )
-    } else {
-        BlurBottomSheet(
-            show = show,
-            title = "课程详情",
-            liquidGlassBackdrop = liquidGlassBackdrop,
-            dimBackground = true,
-            onDismissRequest = onDismiss,
-            endAction = endAction,
-            skipEnterAnimation = skipSheetEnterAnimation,
-            content = content,
-        )
-    }
+    // 单人自用版：改成居中对话框（原来是从底部升起的 sheet）
+    OverlayDialog(
+        show = show,
+        title = "课程详情",
+        liquidGlassBackdrop = liquidGlassBackdrop,
+        enableWindowDim = true,
+        onDismissRequest = onDismiss,
+        content = content,
+    )
 }
 
 private data class DropMaskBox(

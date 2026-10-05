@@ -24,14 +24,31 @@ android {
         }
     }
 
+    signingConfigs {
+        // 单人自用版：用 debug 密钥签 release，保证 R8 优化后的包仍可直接安装
+        getByName("debug")
+        create("release") {
+            storeFile = signingConfigs.getByName("debug").storeFile
+            storePassword = signingConfigs.getByName("debug").storePassword
+            keyAlias = signingConfigs.getByName("debug").keyAlias
+            keyPassword = signingConfigs.getByName("debug").keyPassword
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // 单人自用版：开启完整优化，减少运行时开销
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            // 调试包不混淆，便于排查；正式用 release
+            isMinifyEnabled = false
         }
     }
     packaging {

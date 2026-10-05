@@ -68,9 +68,9 @@ jobs:
       - name: Grant gradlew
         run: chmod +x ./gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace -x lint
-        continue-on-error: true
+      - name: Build release APK (R8 optimized)
+        run: ./gradlew assembleRelease --no-daemon --stacktrace -x lint
+        continue-on-error: false
 
       - name: Collect APKs
         run: |

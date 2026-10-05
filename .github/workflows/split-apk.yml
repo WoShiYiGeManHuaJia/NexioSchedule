@@ -19,7 +19,7 @@ jobs:
         run: |
           gh release download builtin-latest \
             --repo ${{ github.repository }} \
-            --pattern 'app-debug.apk' \
+            --pattern 'app-release.apk' \
             --dir ./apkout
           ls -lh ./apkout
 
@@ -27,7 +27,7 @@ jobs:
         run: |
           mkdir -p apk_b64
           cd apkout
-          split -b 400000 -d -a 3 app-debug.apk ../apk_b64/part_
+          split -b 400000 -d -a 3 app-release.apk ../apk_b64/part_
           cd ..
           for f in apk_b64/part_*; do
             base64 -w 0 "$f" > "$f.b64"
@@ -37,9 +37,9 @@ jobs:
           echo "chunks=$(ls apk_b64 | wc -l)" >> $GITHUB_ENV
           python3 - <<'PY'
           import os, json
-          p = "apkout/app-debug.apk"
+          p = "apkout/app-release.apk"
           man = {
-            "name": "app-debug.apk",
+            "name": "app-release.apk",
             "size": os.path.getsize(p),
             "chunks": len([f for f in os.listdir("apk_b64")])
           }

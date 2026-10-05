@@ -13,11 +13,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.InfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -31,6 +48,7 @@ import com.haooz.chedule.ui.basic.CollapsibleTopAppBarDefaults.CollapsedHeight
 import com.haooz.chedule.ui.basic.LiquidTopBarButton
 import com.haooz.chedule.ui.basic.ProgressiveBlurTopBar
 import com.haooz.chedule.ui.basic.SharedScrollBehavior
+import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.basic.FastForward
@@ -72,6 +90,9 @@ internal fun ScheduleTopBar(
     onOpenSwitchSchedule: () -> Unit,
     onJumpWeek: () -> Unit = {},
     onEnterCustomize: () -> Unit = {},
+    // 单人自用版：左上角真刷新按钮
+    onRefresh: () -> Unit = {},
+    isRefreshing: Boolean = false,
     isTablet: Boolean = false,
     isShiftMode: Boolean = false,
     liquidGlassBackdrop: com.kyant.backdrop.Backdrop?,
@@ -121,8 +142,10 @@ internal fun ScheduleTopBar(
                 gradientMaskHeight = CollapsedHeight + 110.dp,
                 gradientColorOverride = gradientColorOverride,
                 scrollBehavior = scrollBehavior,
-                // 平板左上角不放返回按钮
-                startAction = null,
+                // 平板左上角不放刷新按钮（侧栏已有入口）；手机端放真刷新
+                startAction = if (isTablet) null else { backdropAlpha, shadowAlpha ->
+                    RefreshTopBarButton(backdropAlpha = backdropAlpha)
+                },
                 onAlphaChanged = { backdrop, _ -> onMoreMaterial(backdrop) },
                 endAction = { backdropAlpha, shadowAlpha ->
                     Row(
@@ -268,5 +291,58 @@ private fun Modifier.dayOfWeekTopPadding(
     val placeable = measurable.measure(constraints)
     layout(placeable.width, placeable.height + top) {
         placeable.place(0, top)
+    }
+}
+
+/**
+ * 单人自用版：左上角刷新按钮。
+ * 图标用 miuix 自带的 Reset；刷新中持续匀速旋转，转完自然归位。
+ */
+@Composable
+private fun RefreshTopBarButton(
+    backdropAlpha: Float,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = kotlinx.coroutines.rememberCoroutineScope()
+    var isRefreshing by remember { mutableStateOf(false) }
+    val onClick: () -> Unit = {
+        if (!isRefreshing) {
+            scope.launch {
+                isRefreshing = true
+                val result =
+                    com.haooz.chedule.data.BuiltinCourseSync.sync(context)
+                isRefreshing = false
+                android.widget.Toast
+                    .makeText(context, result.message, android.widget.Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+    // 不刷新时把一轮时长拉到极长，等于静止，几乎不产生动画开销
+    val transition: InfiniteTransition = rememberInfiniteTransition(label = "refreshSpin")
+    val spin by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = if (isRefreshing) 900 else 3_600_000, easing = LinearEasing),
+        ),
+        label = "refreshSpinAngle",
+    )
+    val rotation = if (isRefreshing) spin else 0f
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .graphicsLayer { rotationZ = rotation }
+            .clip(CircleShape)
+            .background(MiuixTheme.colorScheme.onSurface.copy(alpha = 0.10f + 0.08f * backdropAlpha))
+            .clickable(enabled = !isRefreshing) { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = MiuixIcons.Extended.Reset,
+            contentDescription = "刷新课表",
+            tint = MiuixTheme.colorScheme.onSurface,
+            modifier = Modifier.size(23.dp),
+        )
     }
 }

@@ -51,7 +51,6 @@ import com.haooz.chedule.ui.activities.CourseReminderActivity
 import com.haooz.chedule.ui.activities.CourseTimeSettingsActivity
 import com.haooz.chedule.ui.activities.HolidaySettingsActivity
 import com.haooz.chedule.ui.activities.PreferenceSettingsActivity
-import com.haooz.chedule.ui.activities.UpdateSettingsActivity
 import com.haooz.chedule.ui.activities.WidgetIntroActivity
 import com.haooz.chedule.ui.basic.CollapsibleTopAppBarDefaults
 import com.haooz.chedule.ui.basic.SharedScrollBehavior
@@ -525,14 +524,6 @@ fun SettingsScreen(
                                     onClick = {
                                         FeatureLog.preference("open")
                                         val intent = Intent(context, PreferenceSettingsActivity::class.java)
-                                        context.startActivity(intent)
-                                    }
-                                )
-                                ArrowPreference(
-                                    title = "更新设置",
-                                    onClick = {
-                                        FeatureLog.update("open")
-                                        val intent = Intent(context, UpdateSettingsActivity::class.java)
                                         context.startActivity(intent)
                                     }
                                 )
