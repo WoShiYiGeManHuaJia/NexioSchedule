@@ -84,3 +84,15 @@ jobs:
           name: apks
           path: out/*.apk
           if-no-files-found: warn
+
+      - name: Publish APK to release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ls -lh out/ || { echo "无 APK"; exit 1; }
+          TAG=builtin-latest
+          gh release delete "$TAG" -y >/dev/null 2>&1 || true
+          git push origin ":refs/tags/$TAG" >/dev/null 2>&1 || true
+          gh release create "$TAG" --title "单人自用 · 内置课表版" \
+            --notes "内置 17 门课，首次启动自动导入，无需登录" out/*.apk
