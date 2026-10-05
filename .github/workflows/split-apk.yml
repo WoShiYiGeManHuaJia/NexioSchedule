@@ -1,0 +1,56 @@
+name: split-apk
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download APK from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download builtin-latest \
+            --repo ${{ github.repository }} \
+            --pattern 'app-debug.apk' \
+            --dir ./apkout
+          ls -lh ./apkout
+
+      - name: Split into base64 chunks
+        run: |
+          mkdir -p apk_b64
+          cd apkout
+          split -b 400000 -d -a 3 app-debug.apk ../apk_b64/part_
+          cd ..
+          for f in apk_b64/part_*; do
+            base64 -w 0 "$f" > "$f.b64"
+            rm -f "$f"
+          done
+          ls apk_b64 | head -3
+          echo "chunks=$(ls apk_b64 | wc -l)" >> $GITHUB_ENV
+          python3 - <<'PY'
+          import os, json
+          p = "apkout/app-debug.apk"
+          man = {
+            "name": "app-debug.apk",
+            "size": os.path.getsize(p),
+            "chunks": len([f for f in os.listdir("apk_b64")])
+          }
+          json.dump(man, open("apk_b64/manifest.json", "w"))
+          print("manifest:", man)
+          PY
+
+      - name: Commit chunks
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@example.com"
+          git add -f apk_b64
+          git commit -m "apk base64 chunks" || echo "no change"
+          git push origin HEAD:master
