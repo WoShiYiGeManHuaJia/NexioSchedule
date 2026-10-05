@@ -50,6 +50,50 @@ class CourseRepository private constructor(context: Context) {
         migrateToTimeConfigsIfNeeded()
         migrateScheduleTimeConfigBindingsIfNeeded()
         migrateSchedulesIntoDefaultFolder()
+        loadBuiltinCoursesIfNeeded()
+    }
+
+    /**
+     * 单人自用版：首次启动且课表为空时，把 assets 内置课表写进默认课表。
+     *
+     * 只跑一次（KEY_BUILTIN_LOADED 标记）。之后用户自己增删改都不会再被覆盖，
+     * 备份恢复即使清掉课程也不会重新灌入——避免覆盖用户数据。
+     */
+    private fun loadBuiltinCoursesIfNeeded() {
+        if (prefs.getBoolean(KEY_BUILTIN_LOADED, false)) return
+        // 已有课（老用户/恢复的备份）就不再灌，直接打标记
+        if (getAllCourses().isNotEmpty()) {
+            prefs.edit { putBoolean(KEY_BUILTIN_LOADED, true) }
+            return
+        }
+        try {
+            val raw = appContext.assets.open("builtin_courses.json")
+                .bufferedReader().use { it.readText() }
+            val root = com.google.gson.JsonParser.parseString(raw).asJsonObject
+            val arr = root.getAsJsonArray("courses")
+            if (arr == null || arr.size() == 0) {
+                prefs.edit { putBoolean(KEY_BUILTIN_LOADED, true) }
+                return
+            }
+            val type = object : com.google.gson.reflect.TypeToken<List<Course>>() {}.type
+            val list: List<Course> = gson.fromJson(arr, type)
+            if (list.isNotEmpty()) {
+                saveCourses(list)
+                val meta = root.getAsJsonObject("meta")
+                val semester = meta?.get("semester")?.asString ?: ""
+                prefs.edit { putString(KEY_BUILTIN_SEMESTER, semester) }
+                // 顺带把学期框架写进去，否则周次会按默认值算，课表显示错位。
+                // 开学日/总周数用户在设置里随时可改，这里只给一个能用的初值。
+                val totalWeeks = meta?.get("total_weeks")?.asInt ?: 20
+                val startDate = meta?.get("start_date")?.asString ?: ""
+                if (totalWeeks in 1..MAX_TOTAL_WEEKS) setTotalWeeks(totalWeeks)
+                if (startDate.isNotBlank()) setClassStartTime(startDate)
+            }
+            prefs.edit { putBoolean(KEY_BUILTIN_LOADED, true) }
+        } catch (e: Exception) {
+            android.util.Log.e("CourseRepository", "内置课表导入失败", e)
+            // 失败不打标记，下次启动再试
+        }
     }
 
     /**
@@ -244,6 +288,8 @@ class CourseRepository private constructor(context: Context) {
         private const val KEY_AFTERNOON_START = "afternoon_start"
         private const val KEY_EVENING_START = "evening_start"
         private const val KEY_CURRENT_SCHEDULE_ID = "current_schedule_id"
+        private const val KEY_BUILTIN_LOADED = "builtin_courses_loaded"
+        private const val KEY_BUILTIN_SEMESTER = "builtin_semester"
         private const val KEY_SCHEDULE_NAMES = "schedule_names"
         private const val KEY_SCHEDULE_FOLDERS = "schedule_folders"
         /** 首次引入文件夹时的归档标记；只跑一次 */
