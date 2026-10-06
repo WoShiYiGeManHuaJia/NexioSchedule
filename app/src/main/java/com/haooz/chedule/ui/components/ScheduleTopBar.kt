@@ -338,11 +338,40 @@ private fun RefreshTopBarButton(
             .clickable(enabled = !isRefreshing) { onClick() },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = MiuixIcons.Regular.Reset,
-            contentDescription = "刷新课表",
-            tint = MiuixTheme.colorScheme.onSurface,
-            modifier = Modifier.size(23.dp),
-        )
+        androidx.compose.foundation.Canvas(
+            modifier = Modifier.size(22.dp)
+        ) {
+            val tint = MiuixTheme.colorScheme.onSurface
+            val sw = 2.4.dp.toPx()
+            val stroke = androidx.compose.ui.graphics.Stroke(
+                width = sw,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
+            drawArc(
+                color = tint,
+                startAngle = 45f,
+                sweepAngle = 300f,
+                useCenter = false,
+                topLeft = androidx.compose.ui.geometry.Offset(sw, sw),
+                size = androidx.compose.ui.geometry.Size(
+                    size.width - sw * 2f,
+                    size.height - sw * 2f
+                ),
+                style = stroke
+            )
+            val cx = size.width / 2f
+            val cy = size.height / 2f
+            val r = (size.width - sw * 2f) / 2f
+            val rad = Math.toRadians(45.0)
+            val px = cx + r * Math.cos(rad).toFloat()
+            val py = cy + r * Math.sin(rad).toFloat()
+            val tri = androidx.compose.ui.graphics.Path().apply {
+                moveTo(px + 6.0f, py - 4.0f)
+                lineTo(px - 2.0f, py - 8.5f)
+                lineTo(px + 1.5f, py + 6.0f)
+                close()
+            }
+            drawPath(tri, tint)
+        }
     }
 }

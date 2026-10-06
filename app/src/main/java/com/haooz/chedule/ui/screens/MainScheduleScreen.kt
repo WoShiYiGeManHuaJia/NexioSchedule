@@ -533,8 +533,8 @@ fun MainScheduleScreen(
                     val displayDay = swapForDay?.followWeekday?.takeIf { it in 1..7 } ?: dayOfWeek
                     val displayWeek = swapForDay?.followWeek?.takeIf { it > 0 } ?: weekForPage
                     val dayCourses = coursesByDay[displayDay] ?: emptyList()
-                    val filtered = if (showNonCurrentWeek) dayCourses
-                    else dayCourses.filter { it.isActiveInWeek(displayWeek) }
+                    // 单人自用版：不在本周的课程直接不显示（原来是显示成灰色卡片）
+                    val filtered = dayCourses.filter { it.isActiveInWeek(displayWeek) }
                     Triple(displayDay, displayWeek, filtered)
                 })
             }

@@ -38,7 +38,9 @@ object SmartHolidayParser {
         val dates = extractDates(raw, defaultYear)
         if (dates.isEmpty()) return null
 
-        val isSwap = SWAP_WORDS.any { raw.contains(it) } &&
+        // 「上9月21日的课」这类没有"补"字的说法，需要用正则判断，不能用字符串 contains
+        val swapRegex = Regex("[上补调改][^，,。；;]{0,10}课|调休|上班|补课|上课|改上")
+        val isSwap = (SWAP_WORDS.any { raw.contains(it) } || swapRegex.containsMatchIn(raw)) &&
             !raw.contains("不补") && !raw.contains("不调")
         val isHoliday = HOLIDAY_WORDS.any { raw.contains(it) } || raw.contains("放")
 

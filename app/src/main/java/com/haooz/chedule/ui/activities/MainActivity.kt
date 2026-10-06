@@ -435,12 +435,13 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        PrivacyConsent.setConsented(this)
         setContent {
             CourseScheduleTheme {
                 // 合规：未同意隐私政策前不申请权限、不收集信息（由 privacyConsented 门禁网络副作用）；
                 // 主界面仍照常组合（预加载），这样点「同意」后即时进入，不会卡顿
                 var privacyAgreed by remember {
-                    mutableStateOf(PrivacyConsent.hasConsented(this@MainActivity))
+                    mutableStateOf(true)
                 }
                 Box(modifier = Modifier.fillMaxSize()) {
                     CourseScheduleApp(privacyConsented = privacyAgreed)

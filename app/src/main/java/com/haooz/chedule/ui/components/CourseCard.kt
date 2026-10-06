@@ -562,18 +562,7 @@ private fun CardContent(course: Course, sectionCount: Int, textColor: Color, has
             )
             append(course.name)
             pop()
-            if (effectiveShowClassroom) {
-                append('\n')
-                pushStyle(androidx.compose.ui.text.SpanStyle(fontSize = infoFontSize))
-                append("@${course.classroom}")
-                pop()
-            }
-            if (effectiveShowTeacher) {
-                append('\n')
-                pushStyle(androidx.compose.ui.text.SpanStyle(fontSize = infoFontSize))
-                append(course.teacher)
-                pop()
-            }
+
         }
         // 行高用课名（较大者），保证换行间距与原多 Text 布局接近
         val bodyLineHeight = courseNameLineHeight

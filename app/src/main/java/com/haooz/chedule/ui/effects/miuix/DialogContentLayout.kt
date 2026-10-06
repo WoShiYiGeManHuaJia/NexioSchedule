@@ -268,9 +268,8 @@ internal fun DialogContent(
     val windowInfo = LocalWindowInfo.current
     val windowHeight = windowInfo.containerDpSize.height
     val isLargeScreen = DialogDefaults.isLargeScreen()
-    val contentAlignment = remember(isLargeScreen) {
-        if (isLargeScreen) Alignment.Center else Alignment.BottomCenter
-    }
+    // 单人自用版：课程详情弹窗始终居中（原来小屏是 BottomCenter，导致弹窗贴底）
+    val contentAlignment = Alignment.Center
     val bottomCornerRadius = 40.dp
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
 
