@@ -1,29 +1,28 @@
-commit: 454eee4
+commit: a57d79e
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
 --- 编译错误 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:32:27 Unresolved reference 'rememberCoroutineScope'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:306:36 Unresolved reference 'rememberCoroutineScope'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:342:38 Unresolved reference 'Extended'.
-FAILURE: Build completed with 2 failures.
-BUILD FAILED in 1m 43s
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:342:27 None of the following candidates is applicable:
+FAILURE: Build failed with an exception.
+BUILD FAILED in 2m 15s
 --- build.log 尾部 ---
-1: Task failed with an exception.
------------
-* What went wrong:
-Execution failed for task ':app:validateSigningRelease' (registered by plugin 'com.android.internal.application').
-> Keystore file '/home/runner/.config/.android/debug.keystore' not found for signing config 'release'.
+val MiuixIcons.Regular.Reset: ImageVector
 
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-==============================================================================
+val MiuixIcons.Medium.Reset: ImageVector:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+val MiuixIcons.Medium.Reset: ImageVector
 
-2: Task failed with an exception.
------------
+val MiuixIcons.Demibold.Reset: ImageVector:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+val MiuixIcons.Demibold.Reset: ImageVector
+
+> Task :app:compileReleaseKotlin FAILED
+
+[Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
 * What went wrong:
 Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com.android.internal.application').
 > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
@@ -34,13 +33,12 @@ Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
-==============================================================================
 
-BUILD FAILED in 1m 43s
-31 actionable tasks: 31 executed
+BUILD FAILED in 2m 15s
+36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:342:38 Unresolved reference 'Extended'.
+val MiuixIcons.Demibold.Reset: ImageVector
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
@@ -57,6 +55,6 @@ Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.a
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 7s
+BUILD FAILED in 1m 50s
 32 actionable tasks: 24 executed, 8 from cache
 Configuration cache entry stored.
