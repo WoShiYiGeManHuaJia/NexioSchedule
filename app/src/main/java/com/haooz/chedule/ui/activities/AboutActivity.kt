@@ -526,14 +526,6 @@ fun AboutScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            context.startActivity(
-                                                Intent(
-                                                    context,
-                                                    ChangelogActivity::class.java
-                                                )
-                                            )
-                                        }
                                         .padding(
                                             start = 16.dp,
                                             end = 13.dp,
@@ -544,7 +536,7 @@ fun AboutScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "更新日志",
+                                        text = "版本记录",
                                         fontSize = 17.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = MiuixTheme.colorScheme.onSurface
