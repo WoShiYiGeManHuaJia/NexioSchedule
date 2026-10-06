@@ -339,7 +339,7 @@ private fun RefreshTopBarButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Reset,
+            imageVector = MiuixIcons.Regular.Reset,
             contentDescription = "刷新课表",
             tint = MiuixTheme.colorScheme.onSurface,
             modifier = Modifier.size(23.dp),
