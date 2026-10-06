@@ -1,4 +1,4 @@
-commit: 1a4f2bd
+commit: d9c5ed4
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
@@ -40,9 +40,9 @@ e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/ha
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3722:91 Unresolved reference 'it'.
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3723:89 Unresolved reference 'it'.
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3726:70 Cannot infer type for value parameter 'geom'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:138:15 Redeclaration:
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:146:7 Redeclaration:
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:154:12 Redeclaration:
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:139:15 Redeclaration:
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:147:7 Redeclaration:
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:155:12 Redeclaration:
 --- build.log 尾部 ---
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1917:40 Cannot access 'data class DropMaskBox : Any': it is private in file.
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1923:59 Cannot access 'data class DropMaskBox : Any': it is private in file.
@@ -71,7 +71,7 @@ Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 15s
+BUILD FAILED in 2m 35s
 36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
@@ -92,6 +92,6 @@ Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.a
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 18s
+BUILD FAILED in 1m 51s
 32 actionable tasks: 24 executed, 8 from cache
 Configuration cache entry stored.
