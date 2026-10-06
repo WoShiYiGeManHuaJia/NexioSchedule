@@ -381,6 +381,5 @@ private fun RefreshTopBarButton(
             }
             drawPath(arrow, tint)
         }
-        }
     }
 }
