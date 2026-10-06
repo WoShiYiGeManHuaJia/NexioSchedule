@@ -39,10 +39,10 @@ jobs:
           fi
           chmod +x ./gradlew
 
-      - name: Build debug APK
+      - name: Build release APK
         id: build
         run: |
-          ./gradlew assembleDebug --no-daemon > /tmp/build.log 2>&1
+          ./gradlew assembleRelease --no-daemon > /tmp/build.log 2>&1
           echo "exit=$?"
           echo "=== 错误汇总 ==="
           grep -E '^e: |error:|FAILED|What went wrong|^> ' /tmp/build.log | head -60 > /tmp/errs.txt || true

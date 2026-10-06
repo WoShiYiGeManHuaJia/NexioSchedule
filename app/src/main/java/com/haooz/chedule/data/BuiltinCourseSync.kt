@@ -18,8 +18,56 @@ import java.net.URL
  */
 object BuiltinCourseSync {
 
-    private const val SOURCE_URL =
-        "https://raw.githubusercontent.com/WoShiYiGeManHuaJia/kebiao-page/main/weeks_cache.json"
+    /**
+     * 多源兜底：raw.githubusercontent.com 在国内常常连不上，
+     * 所以先走 jsDelivr CDN，再走 GitHub Pages，最后才是 raw。
+     * 任何一个源拿到有效数据就停，全部失败才报失败——绝不假装成功。
+     */
+    private val SOURCES = listOf(
+        "https://cdn.jsdelivr.net/gh/WoShiYiGeManHuaJia/kebiao-page@main/weeks_cache.json",
+        "https://woshiyigemanhuajia.github.io/kebiao-page/weeks_cache.json",
+        "https://raw.githubusercontent.com/WoShiYiGeManHuaJia/kebiao-page/main/weeks_cache.json",
+    )
+
+    /** 拉取文本：逐源尝试，返回 (文本, 失败原因列表) */
+    private fun fetchText(): Pair<String?, String> {
+        val errs = ArrayList<String>()
+        for (url in SOURCES) {
+            var conn: java.net.HttpURLConnection? = null
+            try {
+                conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 12_000
+                    readTimeout = 20_000
+                    requestMethod = "GET"
+                    instanceFollowRedirects = true
+                    setRequestProperty("User-Agent", "Mozilla/5.0")
+                    setRequestProperty("Cache-Control", "no-cache")
+                }
+                val code = conn.responseCode
+                if (code !in 200..299) {
+                    errs.add("${hostOf(url)} HTTP $code")
+                    conn.disconnect()
+                    continue
+                }
+                val text = BufferedReader(
+                    InputStreamReader(conn.inputStream, Charsets.UTF_8)
+                ).use { it.readText() }
+                conn.disconnect()
+                if (text.isBlank() || !text.trimStart().startsWith("{")) {
+                    errs.add("${hostOf(url)} 内容异常")
+                    continue
+                }
+                return Pair(text, "")
+            } catch (e: Exception) {
+                errs.add("${hostOf(url)} ${e.javaClass.simpleName}")
+                try { conn?.disconnect() } catch (_: Exception) {}
+            }
+        }
+        return Pair(null, errs.joinToString("；"))
+    }
+
+    private fun hostOf(url: String): String =
+        url.removePrefix("https://").takeWhile { it != '/' }
 
     data class SyncResult(
         val ok: Boolean,
@@ -36,24 +84,11 @@ object BuiltinCourseSync {
 
     suspend fun sync(context: Context): SyncResult = withContext(Dispatchers.IO) {
         try {
-            val conn = (URL(SOURCE_URL).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 15_000
-                readTimeout = 25_000
-                requestMethod = "GET"
-                instanceFollowRedirects = true
-                setRequestProperty("User-Agent", "Mozilla/5.0")
-                setRequestProperty("Cache-Control", "no-cache")
+            val (text0, fetchErr) = fetchText()
+            if (text0 == null) {
+                return@withContext SyncResult(false, "全部源都取不到：$fetchErr")
             }
-            val code = conn.responseCode
-            if (code !in 200..299) {
-                conn.disconnect()
-                return@withContext SyncResult(false, "服务器返回 HTTP $code")
-            }
-            val text = BufferedReader(
-                InputStreamReader(conn.inputStream, Charsets.UTF_8)
-            ).use { it.readText() }
-            conn.disconnect()
-            if (text.isBlank()) return@withContext SyncResult(false, "返回内容为空")
+            val text = text0
 
             val root = JSONObject(text)
             val weeks = root.optJSONObject("weeks")
@@ -151,13 +186,8 @@ object BuiltinCourseSync {
             val changed = oldFp != newFp
             repo.saveCourses(courses)
 
-            val cw = root.optInt("current_week", 0)
-            if (cw > 0) {
-                try {
-                    repo.setCurrentWeek(cw)
-                } catch (_: Exception) {
-                }
-            }
+            // 不覆盖当前周：数据源里的 current_week 是路由器跑的那天，
+            // 用它会把周次拽回去。周次由 App 按开学日期自行推算。
 
             SyncResult(
                 ok = true,
