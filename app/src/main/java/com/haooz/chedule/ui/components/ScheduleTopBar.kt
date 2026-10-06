@@ -344,7 +344,7 @@ private fun RefreshTopBarButton(
         ) {
             val tint = tintColor
             val sw = 2.4.dp.toPx()
-            val stroke = androidx.compose.ui.graphics.Stroke(
+            val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
                 width = sw,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
