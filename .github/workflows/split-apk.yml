@@ -13,6 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 清理旧分片，避免重复编码污染
+        run: |
+          rm -rf apk_b64
+          mkdir -p apk_b64
+
       - name: Download APK from release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -22,35 +27,43 @@ jobs:
             --pattern 'app-release.apk' \
             --dir ./apkout
           ls -lh ./apkout
+          echo "SIZE=$(stat -c%s ./apkout/app-release.apk)" >> $GITHUB_ENV
+          echo "MD5=$(md5sum ./apkout/app-release.apk | cut -d' ' -f1)" >> $GITHUB_ENV
+          echo "SHA256=$(sha256sum ./apkout/app-release.apk | cut -d' ' -f1)" >> $GITHUB_ENV
 
-      - name: Split into base64 chunks
+      - name: Split into base64 chunks (single encode)
         run: |
-          mkdir -p apk_b64
           cd apkout
           split -b 400000 -d -a 3 app-release.apk ../apk_b64/part_
           cd ..
-          for f in apk_b64/part_*; do
-            base64 -w 0 "$f" > "$f.b64"
+          N=$(ls apk_b64/part_* | wc -l)
+          echo "原始分片数: $N"
+          i=0
+          for f in $(ls apk_b64/part_* | sort); do
+            base64 -w 0 "$f" > "apk_b64/chunk_$(printf '%03d' $i).b64"
             rm -f "$f"
+            i=$((i+1))
           done
-          ls apk_b64 | head -3
-          echo "chunks=$(ls apk_b64 | wc -l)" >> $GITHUB_ENV
+          echo "编码分片数: $(ls apk_b64/chunk_*.b64 | wc -l)"
           python3 - <<'PY'
-          import os, json
+          import os, json, hashlib
           p = "apkout/app-release.apk"
           man = {
             "name": "app-release.apk",
             "size": os.path.getsize(p),
-            "chunks": len([f for f in os.listdir("apk_b64")])
+            "md5": hashlib.md5(open(p,'rb').read()).hexdigest(),
+            "chunks": len([f for f in os.listdir("apk_b64") if f.startswith("chunk_")])
           }
           json.dump(man, open("apk_b64/manifest.json", "w"))
           print("manifest:", man)
           PY
+          echo "=== manifest 内容 ==="
+          cat apk_b64/manifest.json
 
       - name: Commit chunks
         run: |
           git config user.name "bot"
           git config user.email "bot@example.com"
           git add -f apk_b64
-          git commit -m "apk base64 chunks" || echo "no change"
+          git commit -m "apk base64 chunks (clean)" || echo "no change"
           git push origin HEAD:master
