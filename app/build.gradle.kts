@@ -25,13 +25,19 @@ android {
     }
 
     signingConfigs {
-        // 单人自用版：用 debug 密钥签 release，保证 R8 优化后的包仍可直接安装
+        // 固定签名：软大课表专用密钥，保证后续每个版本都能直接覆盖安装（不再签名冲突）
+        create("softbig") {
+            storeFile = rootProject.file("keystore/softbig.jks")
+            storePassword = "softbig2026"
+            keyAlias = "softbig"
+            keyPassword = "softbig2026"
+        }
         getByName("debug")
         create("release") {
-            storeFile = signingConfigs.getByName("debug").storeFile
-            storePassword = signingConfigs.getByName("debug").storePassword
-            keyAlias = signingConfigs.getByName("debug").keyAlias
-            keyPassword = signingConfigs.getByName("debug").keyPassword
+            storeFile = signingConfigs.getByName("softbig").storeFile
+            storePassword = signingConfigs.getByName("softbig").storePassword
+            keyAlias = signingConfigs.getByName("softbig").keyAlias
+            keyPassword = signingConfigs.getByName("softbig").keyPassword
         }
     }
 
@@ -49,6 +55,7 @@ android {
         debug {
             // 调试包不混淆，便于排查；正式用 release
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("softbig")
         }
     }
     packaging {

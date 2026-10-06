@@ -536,9 +536,59 @@ fun TimeConfigEditScreen(
     var afternoonTimes by remember { mutableStateOf(timeConfig.getPeriodTimes("afternoon")) }
     var eveningTimes by remember { mutableStateOf(timeConfig.getPeriodTimes("evening")) }
 
+    var smartTimeInput by remember { mutableStateOf("") }
+
     // key 同 sectionTimes，如 "morning_1" -> "早自习"
     var sectionNames by remember { mutableStateOf(timeConfig.sectionNames) }
     var tempSectionName by remember { mutableStateOf("") }
+
+    // 一句话调整作息：解析"第五节 14:30 上课"并写入对应节次
+    fun applySmartTime(input: String): String {
+        val parsed = parseSmartSectionTime(input)
+        if (parsed.isEmpty()) return "没识别到，试试「第五节 14:30 上课」"
+        val total = morningSections + afternoonSections + eveningSections
+        var changed = 0
+        for (pair in parsed) {
+            val sec = pair.first
+            val start = pair.second
+            if (sec < 1 || sec > total) continue
+            val period: String
+            val idx: Int
+            if (sec <= morningSections) {
+                period = "morning"
+                idx = sec
+            } else if (sec <= morningSections + afternoonSections) {
+                period = "afternoon"
+                idx = sec - morningSections
+            } else {
+                period = "evening"
+                idx = sec - morningSections - afternoonSections
+            }
+            val old = when (period) {
+                "morning" -> morningTimes[idx]
+                "afternoon" -> afternoonTimes[idx]
+                else -> eveningTimes[idx]
+            } ?: continue
+            val oldStart = old.substringBefore("-")
+            val oldEnd = old.substringAfter("-", "")
+            val end = shiftEndTime(oldStart, oldEnd, start)
+            val newVal = if (end.isEmpty()) "$start-$oldEnd" else "$start-$end"
+            val mut = when (period) {
+                "morning" -> morningTimes.toMutableMap()
+                "afternoon" -> afternoonTimes.toMutableMap()
+                else -> eveningTimes.toMutableMap()
+            }
+            mut[idx] = newVal
+            when (period) {
+                "morning" -> morningTimes = mut
+                "afternoon" -> afternoonTimes = mut
+                else -> eveningTimes = mut
+            }
+            changed++
+        }
+        if (changed > 0) quickTimeEnabled = false
+        return if (changed > 0) "已调整 $changed 节课的上课时间" else "节次超出范围（1-$total）"
+    }
 
     fun getSectionTitle(period: String, relSection: Int): String {
         val key = "${period}_$relSection"
@@ -851,6 +901,43 @@ fun TimeConfigEditScreen(
                                         label = "请输入配置名称",
                                         useLabelAsPlaceholder = true,
                                         requestFocus = isFabCreation
+                                    )
+                                }
+
+                                item(key = "smart_time") {
+                                    SmallTitle(
+                                        text = "一句话调整作息",
+                                    )
+                                    NativeMiuixTextField(
+                                        value = smartTimeInput,
+                                        onValueChange = { smartTimeInput = it },
+                                        label = "如：第五节 14:30 上课",
+                                        useLabelAsPlaceholder = true
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(ContinuousRoundedRectangle(12.dp))
+                                            .background(MiuixTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                            .clickable {
+                                                val msg = applySmartTime(smartTimeInput)
+                                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                            }
+                                            .padding(vertical = 12.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "识别并应用",
+                                            color = MiuixTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "支持「第五节 14:30 上课」「第五节 14:30-15:10」；只给上课时间则保持原时长",
+                                        fontSize = 12.sp,
+                                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                                     )
                                 }
 
@@ -2057,4 +2144,47 @@ fun TimeConfigEditScreen(
             }
         }
     }
+}
+
+private val SMART_CN_NUM = mapOf(
+    '一' to 1, '二' to 2, '三' to 3, '四' to 4, '五' to 5,
+    '六' to 6, '七' to 7, '八' to 8, '九' to 9, '十' to 10
+)
+
+/** 解析「第五节 14:30 上课」这类一句话，返回 (全局节次, 新上课时间) 列表 */
+private fun parseSmartSectionTime(input: String): List<Pair<Int, String>> {
+    val result = mutableListOf<Pair<Int, String>>()
+    val sentences = input.split("，", ",", "；", ";", "。", "\n")
+    val sectionRe = Regex("第\\s*([0-9]+|[一二三四五六七八九十]+)\\s*[节节课]")
+    val timeRe = Regex("(\\d{1,2})\\s*[:：点]\\s*(\\d{1,2})?")
+    for (one in sentences) {
+        val secMatch = sectionRe.find(one) ?: continue
+        val raw = secMatch.groupValues[1]
+        val sec = raw.toIntOrNull()
+            ?: SMART_CN_NUM[raw.firstOrNull()]
+            ?: continue
+        val hm = timeRe.find(one) ?: continue
+        val h = hm.groupValues[1].toIntOrNull() ?: continue
+        val m = hm.groupValues[2].toIntOrNull() ?: 0
+        if (h !in 0..23 || m !in 0..59) continue
+        result.add(sec to String.format("%02d:%02d", h, m))
+    }
+    return result
+}
+
+/** 按原时长把下课时间顺延；解析失败返回空串 */
+private fun shiftEndTime(oldStart: String, oldEnd: String, newStart: String): String {
+    fun toMin(v: String): Int {
+        val p = v.split(":")
+        val h = p.getOrNull(0)?.toIntOrNull() ?: return -1
+        val m = p.getOrNull(1)?.toIntOrNull() ?: 0
+        return h * 60 + m
+    }
+    val os = toMin(oldStart)
+    val oe = toMin(oldEnd)
+    val ns = toMin(newStart)
+    if (os < 0 || oe < 0 || ns < 0 || oe <= os) return ""
+    val dur = oe - os
+    val ne = ns + dur
+    return String.format("%02d:%02d", ne / 60, ne % 60)
 }
