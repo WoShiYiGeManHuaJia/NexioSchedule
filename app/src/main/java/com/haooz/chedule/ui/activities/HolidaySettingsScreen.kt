@@ -529,10 +529,8 @@ fun HolidaySettingsScreen(
             item {
                 SectionTitleRow(
                     text = "一句话添加",
-                    description = "• 直接输入中文说明，自动识别是放假还是调休
-" +
-                        "• 放假：10月1日到10月7日放假
-" +
+                    description = "• 直接输入中文说明，自动识别是放假还是调休\n" +
+                        "• 放假：10月1日到10月7日放假\n" +
                         "• 调休：10月11日补10月7日的课",
                     liquidGlassBackdrop = liquidGlassBackdrop,
                 )
