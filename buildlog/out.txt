@@ -1,22 +1,21 @@
-commit: 01ac7aa
+commit: 497441a
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
 --- 编译错误 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:344:35 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:346:55 Unresolved reference 'Stroke'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:347:55 Unresolved reference 'Stroke'.
 FAILURE: Build failed with an exception.
-BUILD FAILED in 1m 51s
+BUILD FAILED in 2m 56s
 --- build.log 尾部 ---
-
-> Task :app:downloadEduIndex
-[EduIndex] 已拉取最新索引 -> /home/runner/work/NexioSchedule/NexioSchedule/app/src/main/assets/eduloader/school_index.pb
-
-> Task :app:mergeReleaseAssets
-> Task :app:compressReleaseAssets
+> Task :app:validateSigningRelease
+> Task :app:writeReleaseAppMetadata
+> Task :app:writeReleaseSigningConfigVersions
+> Task :app:processReleaseManifest
+> Task :app:processReleaseManifestForPackage
+> Task :app:mergeReleaseResources
+> Task :app:processReleaseResources
 > Task :app:compileReleaseKotlin
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:344:35 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:346:55 Unresolved reference 'Stroke'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:347:55 Unresolved reference 'Stroke'.
 
 > Task :app:compileReleaseKotlin FAILED
 
@@ -35,11 +34,11 @@ Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 51s
+BUILD FAILED in 2m 56s
 36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
-> Task :app:compileDebugKotlin FAILED
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:347:55 Unresolved reference 'Stroke'.
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
@@ -56,6 +55,6 @@ Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.a
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 31s
+BUILD FAILED in 1m 57s
 32 actionable tasks: 24 executed, 8 from cache
 Configuration cache entry stored.
