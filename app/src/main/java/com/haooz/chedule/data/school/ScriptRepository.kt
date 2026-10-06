@@ -115,7 +115,7 @@ class ScriptRepository(private val context: Context, private val repoUrl: String
      * 返回 0=已是最新, 1=更新完成, -1=失败
      */
     fun updateAll(onLog: (String) -> Unit, onProgress: (Float) -> Unit = {}): Int {
-        onLog("=== 开始检查更新 ===")
+        onLog("=== 开始检查数据 ===")
         onProgress(0f)
 
         val url = "$remoteBase/raw/$INDEX_BRANCH/$INDEX_FILE_NAME"

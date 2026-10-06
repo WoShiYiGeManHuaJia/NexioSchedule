@@ -107,7 +107,7 @@ private val POLICY_SECTIONS: List<PolicySection> = listOf(
             PolicyBlock.Table(
                 headers = listOf("权限", "使用目的", "是否必需"),
                 rows = listOf(
-                    listOf("INTERNET", "访问网络。用于教务导入、天气查询、检查更新、WebDAV 云同步、课表分享及匿名统计上报。", "必需"),
+                    listOf("INTERNET", "访问网络。用于教务导入、天气查询、WebDAV 云同步及课表分享。", "必需"),
                     listOf("ACCESS_NETWORK_STATE", "读取网络连接状态，无网络时避免无效请求并给出提示。", "必需"),
                     listOf("POST_NOTIFICATIONS", "发送课前提醒、次日课程提醒、上课中等通知。", "可选"),
                     listOf("VIBRATE", "课程提醒通知的振动提示。", "可选"),
