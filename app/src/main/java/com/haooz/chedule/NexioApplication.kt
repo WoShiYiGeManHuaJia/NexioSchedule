@@ -81,8 +81,7 @@ class NexioApplication : Application() {
                         file.delete()
                     }
                 }
-                // APK 与检查更新同一策略：按 latest_tag 保留完整包，不按 mtime 只留最新
-                com.haooz.chedule.ui.utils.UpdateChecker.cleanupTransientApks(this@NexioApplication)
+                // 单人自用版：已移除应用内更新，不再调用 UpdateChecker
             }
         }
     }

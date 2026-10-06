@@ -57,19 +57,23 @@ jobs:
           find . -name "*.apk" -type f 2>/dev/null | while read f; do cp "$f" "out/$(basename "$f")"; done
           ls -lh out/ || echo "无 APK"
 
-      - name: Save build errors to repo
-        if: always()
-        run: |
-          mkdir -p buildlog
-          { echo "commit: $(git rev-parse --short HEAD)"; echo; cat /tmp/errs.txt 2>/dev/null; } > buildlog/errors.txt
-          { echo "--- tail ---"; tail -60 /tmp/build.log 2>/dev/null; } >> buildlog/errors.txt
-          git config user.name bot; git config user.email bot@example.com
-          git add -f buildlog
-          git commit -m "build log $(git rev-parse --short HEAD)" || echo "no change"
-          git push origin HEAD:master || echo "push fail"
-
       - uses: actions/upload-artifact@v4
         with:
           name: apks
           path: out/*.apk
           if-no-files-found: warn
+
+      - name: Save build errors to repo
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          { echo "commit: $(git rev-parse --short HEAD)"; echo; cat /tmp/errs.txt 2>/dev/null; echo; echo "--- tail ---"; tail -60 /tmp/build.log 2>/dev/null; } > /tmp/errors.txt
+          B64=$(base64 -w 0 /tmp/errors.txt)
+          curl -sS -X PUT \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/errors.txt" \
+            -d "{\"message\":\"build errors\",\"content\":\"$B64\"}" > /dev/null
+          echo "saved"

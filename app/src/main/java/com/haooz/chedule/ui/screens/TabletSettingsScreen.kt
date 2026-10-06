@@ -76,7 +76,6 @@ import com.haooz.chedule.ui.activities.HolidaySettingsScreen
 import com.haooz.chedule.ui.activities.LocalBackupScreen
 import com.haooz.chedule.ui.activities.PreferenceSettingsScreen
 import com.haooz.chedule.ui.activities.ScheduleDataManageMode
-import com.haooz.chedule.ui.activities.UpdateSettingsScreen
 import com.haooz.chedule.ui.activities.WebDavSettingsScreen
 import com.haooz.chedule.ui.activities.WidgetIntroScreen
 import com.haooz.chedule.ui.basic.LiquidGlassTextButton
@@ -138,7 +137,6 @@ enum class TabletSettingsDest(val title: String, val group: String) {
     LocalBackup("本地备份", "备份"),
     WebDav("WebDAV 云同步", "备份"),
     Preference("应用偏好设置", "其他"),
-    Update("更新设置", "其他"),
     About("关于应用", "其他"),
     Appreciate("捐赠支持", "其他"),
     Communication("交流与反馈", "其他"),
@@ -763,10 +761,6 @@ fun TabletSettingsScreen(
                                     liquidGlassBackdrop = liquidGlassBackdrop,
                                 )
 
-                                TabletSettingsDest.Update -> UpdateSettingsScreen(
-                                    scrollBehavior = null,
-                                    liquidGlassBackdrop = liquidGlassBackdrop,
-                                )
 
                                 TabletSettingsDest.About -> {
                                     val aboutBackdrop =
