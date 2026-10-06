@@ -1,97 +1,41 @@
-commit: d9c5ed4
+commit: d18ad88
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
-(无)
+total 3.2M
+-rw-r--r-- 1 runner runner 3.2M Oct  6 13:27 app-release.apk
+drwxr-xr-x 4 runner runner 4.0K Oct  6 13:27 baselineProfiles
+-rw-r--r-- 1 runner runner  714 Oct  6 13:27 output-metadata.json
 --- 编译错误 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:63 Cannot infer type for value parameter 'courses'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:72 Cannot infer type for value parameter 'left'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:78 Cannot infer type for value parameter 'top'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:83 Cannot infer type for value parameter 'width'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:90 Cannot infer type for value parameter 'height'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:98 Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:101 Cannot infer type for value parameter 'courseIdToHide'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3407:117 Cannot infer type for value parameter 'targetWeek'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3419:92 Unresolved reference 'it'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:66 Cannot infer type for value parameter 'day'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:71 Cannot infer type for value parameter 'section'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:80 Cannot infer type for value parameter 'centerX'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:89 Cannot infer type for value parameter 'cellTopY'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:99 Cannot infer type for value parameter 'width'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:106 Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:109 Cannot infer type for value parameter 'addDay'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3420:117 Cannot infer type for value parameter 'addWeek'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3432:67 Cannot infer type for value parameter 'course'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3432:75 Cannot infer type for value parameter 'left'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3432:81 Cannot infer type for value parameter 'top'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3432:86 Cannot infer type for value parameter 'width'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3432:93 Cannot infer type for value parameter 'height'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3432:101 Cannot infer type for value parameter 'backdrop'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3432:111 Cannot infer type for value parameter 'currentWeek'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3438:82 Unresolved reference 'id'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3449:64 Unresolved reference 'startSection'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3450:64 Unresolved reference 'endSection'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3453:88 Unresolved reference 'dayOfWeek'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3455:92 Unresolved reference 'startSection'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3486:67 Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3497:62 Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3497:65 Cannot infer type for value parameter 'offsetX'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3497:74 Cannot infer type for value parameter 'offsetY'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3534:65 Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3722:91 Unresolved reference 'it'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3723:89 Unresolved reference 'it'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainActivity.kt:3726:70 Cannot infer type for value parameter 'geom'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:139:15 Redeclaration:
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:147:7 Redeclaration:
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/MainScheduleScreen.kt:155:12 Redeclaration:
+BUILD SUCCESSFUL in 5m 51s
 --- build.log 尾部 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1917:40 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1923:59 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1924:58 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1925:60 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1926:61 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1930:55 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1931:56 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1932:57 Cannot access 'data class DropMaskBox : Any': it is private in file.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/screens/MainScheduleScreen.kt:1933:54 Cannot access 'data class DropMaskBox : Any': it is private in file.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:35 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:79 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/internal/Paint.kt:9:10 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/internal/Paint.kt:15:10 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
 
-> Task :app:compileReleaseKotlin FAILED
+> Task :app:processReleaseJavaRes
+> Task :app:mergeReleaseJavaResource
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:mergeReleaseGeneratedProguardFiles
+> Task :app:expandReleaseArtProfileWildcards
+> Task :app:generateReleaseLintVitalReportModel
+> Task :app:produceReleaseComposeMapping
+> Task :app:reportReleaseComposeMappingErrors
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:minifyReleaseWithR8
+> Task :app:convertShrunkResourcesToBinaryRelease
+> Task :app:optimizeReleaseResources
+> Task :app:mergeReleaseComposeMapping
+> Task :app:compileReleaseArtProfile
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+> Task :app:packageRelease
+> Task :app:assembleRelease
+> Task :app:createReleaseApkListingFileRedirect
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com.android.internal.application').
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 2m 35s
-36 actionable tasks: 36 executed
+BUILD SUCCESSFUL in 5m 51s
+54 actionable tasks: 54 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
-> Task :app:compileDebugKotlin FAILED
-
-[Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 1m 51s
-32 actionable tasks: 24 executed, 8 from cache
-Configuration cache entry stored.
