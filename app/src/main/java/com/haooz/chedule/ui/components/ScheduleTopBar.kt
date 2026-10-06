@@ -29,7 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rememberCoroutineScope
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -303,7 +303,7 @@ private fun RefreshTopBarButton(
     backdropAlpha: Float,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val scope = kotlinx.coroutines.rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     val onClick: () -> Unit = {
         if (!isRefreshing) {
@@ -339,7 +339,7 @@ private fun RefreshTopBarButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = MiuixIcons.Extended.Reset,
+            imageVector = Reset,
             contentDescription = "刷新课表",
             tint = MiuixTheme.colorScheme.onSurface,
             modifier = Modifier.size(23.dp),

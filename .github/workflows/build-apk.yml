@@ -39,6 +39,18 @@ jobs:
           fi
           chmod +x ./gradlew
 
+      - name: Ensure debug keystore exists
+        run: |
+          mkdir -p "$HOME/.config/.android"
+          if [ ! -f "$HOME/.config/.android/debug.keystore" ]; then
+            keytool -genkeypair -v \
+              -keystore "$HOME/.config/.android/debug.keystore" \
+              -storepass android -keypass android -alias androiddebugkey \
+              -dname "CN=Android Debug,O=Android,C=US" \
+              -keyalg RSA -keysize 2048 -validity 10000
+          fi
+          ls -l "$HOME/.config/.android/debug.keystore"
+
       - name: Build release APK
         id: build
         continue-on-error: true
