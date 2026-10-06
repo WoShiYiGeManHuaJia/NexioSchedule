@@ -10,6 +10,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -980,6 +981,16 @@ fun MainScheduleScreen(
                         cardBlurRadius = cardBlurRadius,
                     )
 
+                    // 今日列框选：底色 + 描边，一眼分辨当天的课
+                    val todayDayOfWeek = LocalDate.now().dayOfWeek.value
+                    val todayColumnShape = ContinuousRoundedRectangle(12.dp)
+                    val todayColumnBg = if (scheduleIsDark) {
+                        MiuixTheme.colorScheme.primary.copy(alpha = 0.10f)
+                    } else {
+                        MiuixTheme.colorScheme.primary.copy(alpha = 0.08f)
+                    }
+                    val todayColumnBorder = MiuixTheme.colorScheme.primary.copy(alpha = 0.55f)
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1017,6 +1028,8 @@ fun MainScheduleScreen(
                                 weekHolidayCancelledCourseIds[page]?.get(dayOfWeek).orEmpty()
                             // 调课日空白格添加：落到 follow 星期/周（周五课调到周二 → 点周二默认周五）
                             val addDayForCol = if (isWorkSwap) displayDayForCol else dayOfWeek
+                            // 今日列：仅当前周生效，用日历当天（不受调休显示映射影响）
+                            val isTodayColumn = week == currentWeek && dayOfWeek == todayDayOfWeek
                             val addWeekForCol = if (isWorkSwap) displayWeekForDay else -1
                             val stableOnCourseClick: (Course) -> Unit =
                                 remember(page, dayOfWeek, week, displayWeekForDay) {
@@ -1114,6 +1127,19 @@ fun MainScheduleScreen(
                                 isDark = scheduleIsDark,
                                 modifier = Modifier
                                     .weight(1f)
+                                    .then(
+                                        if (isTodayColumn) Modifier
+                                            .background(
+                                                color = todayColumnBg,
+                                                shape = todayColumnShape
+                                            )
+                                            .border(
+                                                width = 1.4.dp,
+                                                color = todayColumnBorder,
+                                                shape = todayColumnShape
+                                            )
+                                        else Modifier
+                                    )
                                     .onGloballyPositioned { coordinates ->
                                         val pos = coordinates.positionInRoot()
                                         val w = coordinates.size.width.toFloat()
