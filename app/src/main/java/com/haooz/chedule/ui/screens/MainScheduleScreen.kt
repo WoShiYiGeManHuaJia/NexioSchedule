@@ -1537,13 +1537,21 @@ fun MainScheduleScreen(
                             )
                             if (course.classroom.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(14.dp))
-                                Text(
-                                    text = course.classroom,
-                                    style = MiuixTheme.textStyles.body1.copy(fontSize = 26.sp),
-                                    fontWeight = FontWeight.Bold,
-                                    color = MiuixTheme.colorScheme.primary,
-                                    textAlign = TextAlign.Center
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .clip(ContinuousRoundedRectangle(14.dp))
+                                        .background(Color(course.colorRes).copy(alpha = 0.14f))
+                                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = course.classroom,
+                                        style = MiuixTheme.textStyles.body1.copy(fontSize = 24.sp),
+                                        fontWeight = FontWeight.Bold,
+                                        color = MiuixTheme.colorScheme.primary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
                             if (course.teacher.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -1832,10 +1840,12 @@ private fun CourseDetailSheet(
     content: @Composable () -> Unit,
 ) {
     var show by showState
-    // 单人自用版：改成居中对话框（原来是从底部升起的 sheet）
+    // 固定柔和底色：不使用纯白/纯黑，也不跟随自定义壁纸变黑
+    val dialogBg = if (isAppDarkTheme()) Color(0xFF1F1F22) else Color(0xFFF4F5F7)
     OverlayDialog(
         show = show,
         title = "课程详情",
+        backgroundColor = dialogBg,
         liquidGlassBackdrop = liquidGlassBackdrop,
         enableWindowDim = true,
         onDismissRequest = onDismiss,
