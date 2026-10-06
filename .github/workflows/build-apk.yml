@@ -125,3 +125,19 @@ jobs:
           name: apks
           path: out/*.apk
           if-no-files-found: warn
+
+      - name: Publish APK to release
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          ls -lh out/
+          for f in out/*.apk; do
+            [ -e "$f" ] || continue
+            echo "发布 $f 大小 $(stat -c%s "$f") md5 $(md5sum "$f" | cut -d' ' -f1)"
+            gh release view builtin-latest --repo ${{ github.repository }} > /dev/null 2>&1 || \
+              gh release create builtin-latest --repo ${{ github.repository }} --title "课表 APK" --notes "auto build"
+            gh release upload builtin-latest "$f" --repo ${{ github.repository }} --clobber
+          done
+          gh release list --repo ${{ github.repository }} --limit 1 || true
