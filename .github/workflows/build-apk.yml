@@ -43,75 +43,73 @@ jobs:
         id: build
         continue-on-error: true
         run: |
+          set +e
           ./gradlew assembleRelease --no-daemon > /tmp/build.log 2>&1
-          echo "exit=$?"
-          tail -40 /tmp/build.log
+          echo "GRADLE_EXIT=$?" >> $GITHUB_OUTPUT
+          echo "gradle_exit=$?" > /tmp/exit.txt
+          cat /tmp/exit.txt
+          set -e
+          echo "done"
 
       - name: Fallback to debug if release failed
-        if: steps.build.outcome == 'failure'
+        if: always()
+        continue-on-error: true
         run: |
-          echo "release 失败，回退 debug"
-          ./gradlew assembleDebug --no-daemon > /tmp/build2.log 2>&1
-          echo "exit=$?"
-          tail -30 /tmp/build2.log
+          set +e
+          if ! ls app/build/outputs/apk/release/*.apk > /dev/null 2>&1; then
+            echo "release 无产物，回退 debug"
+            ./gradlew assembleDebug --no-daemon > /tmp/build2.log 2>&1
+            echo "debug_exit=$?"
+          else
+            echo "release 已有产物"
+          fi
+          set -e
+
+      - name: Collect APKs
+        if: always()
+        run: |
+          mkdir -p out
+          find . -path ./out -prune -o -name "*.apk" -type f -print 2>/dev/null | while read f; do cp "$f" "out/$(basename "$f")"; done
+          ls -lh out/ || echo "无 APK"
 
       - name: Upload build diagnostics
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +e
           mkdir -p buildlog
-          { echo "=== assembleRelease 结果: ${{ steps.build.outcome }} ==="
-            echo "--- build.log 尾部 ---"
-            grep -E "BUILD SUCCESSFUL|BUILD FAILED|FAILURE:|error:|assembleRelease" /tmp/build.log 2>/dev/null | head -30
+          {
+            echo "commit: $(git rev-parse --short HEAD)"
+            echo "gradle_exit: $(cat /tmp/exit.txt 2>/dev/null)"
             echo "--- apk 输出目录 ---"
             ls -lh app/build/outputs/apk/*/ 2>/dev/null || echo "(无)"
-            echo "--- out ---"
-            ls -lh out/ 2>/dev/null || echo "(空)"
+            echo "--- 编译错误 ---"
+            grep -E '^e: |^w: .*error|FAILURE:|BUILD FAILED|BUILD SUCCESSFUL' /tmp/build.log 2>/dev/null | head -40
+            echo "--- build.log 尾部 ---"
+            tail -30 /tmp/build.log 2>/dev/null
+            echo "--- debug 回退日志尾部 ---"
+            tail -20 /tmp/build2.log 2>/dev/null
           } > buildlog/out.txt 2>&1
           cat buildlog/out.txt
           B64=$(base64 -w 0 buildlog/out.txt)
-          curl -s -X PUT \
+          SHA=$(curl -sS -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/out.txt" | jq -r '.sha // empty')
+          if [ -n "$SHA" ]; then
+            JSON=$(jq -n --arg c "$B64" --arg s "$SHA" '{message:"build diagnostics",content:$c,sha:$s}')
+          else
+            JSON=$(jq -n --arg c "$B64" '{message:"build diagnostics",content:$c}')
+          fi
+          curl -sS -X PUT \
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/out.txt" \
-            -d "{\"message\":\"build diagnostics\",\"content\":\"$B64\"}" > /dev/null || true
-          echo "exit=$?"
-          echo "=== 错误汇总 ==="
-          grep -E '^e: |error:|FAILED|What went wrong|^> ' /tmp/build.log | head -60 > /tmp/errs.txt || true
-          cat /tmp/errs.txt
-          echo "=== 末尾 40 行 ==="
-          tail -40 /tmp/build.log
-        continue-on-error: true
-
-      - name: Collect APKs
-        run: |
-          mkdir -p out
-          find . -name "*.apk" -type f 2>/dev/null | while read f; do cp "$f" "out/$(basename "$f")"; done
-          ls -lh out/ || echo "无 APK"
-          echo "--- apk 输出目录 ---" > buildlog_out.txt
-          ls -lh app/build/outputs/apk/*/ 2>/dev/null >> buildlog_out.txt || echo "(无)" >> buildlog_out.txt
-          echo "--- out 内容 ---" >> buildlog_out.txt
-          ls -lh out/ >> buildlog_out.txt
-          mkdir -p buildlog && mv buildlog_out.txt buildlog/out.txt
+            -d "$JSON" | head -c 300
+          echo ""
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: apks
           path: out/*.apk
           if-no-files-found: warn
-
-      - name: Save build errors to repo
-        if: always()
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          { echo "commit: $(git rev-parse --short HEAD)"; echo; cat /tmp/errs.txt 2>/dev/null; echo; echo "--- tail ---"; tail -60 /tmp/build.log 2>/dev/null; } > /tmp/errors.txt
-          B64=$(base64 -w 0 /tmp/errors.txt)
-          curl -sS -X PUT \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/errors.txt" \
-            -d "{\"message\":\"build errors\",\"content\":\"$B64\"}" > /dev/null
-          echo "saved"
