@@ -1,0 +1,17 @@
+=== assembleRelease 结果: failure ===
+--- build.log 尾部 ---
+Calculating task graph as no cached configuration is available for tasks: assembleRelease
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:532:58 Syntax error: Expecting '"'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:532:58 Syntax error: Expecting ','.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:533:4 Syntax error: Expecting '"'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:533:4 Syntax error: Expecting ','.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:534:44 Syntax error: Expecting '"'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:534:44 Syntax error: Expecting ','.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:535:4 Syntax error: Expecting '"'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:535:4 Syntax error: Expecting ','.
+FAILURE: Build completed with 2 failures.
+BUILD FAILED in 2m 9s
+--- apk 输出目录 ---
+(无)
+--- out ---
+(空)
