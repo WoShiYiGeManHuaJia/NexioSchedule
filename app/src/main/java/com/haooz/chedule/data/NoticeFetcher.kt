@@ -25,6 +25,8 @@ object NoticeFetcher {
 
     /** 拉取当前公告；网络异常或无公告时返回 null */
     suspend fun fetch(context: Context): Notice? = withContext(Dispatchers.IO) {
+        // 单人自用版：关闭开屏公告弹窗，不再联网拉取
+        if (true) return@withContext null
         try {
             val resp = client.newCall(Request.Builder().url(API_URL).build()).execute()
             try {

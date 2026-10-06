@@ -556,55 +556,62 @@ fun HolidaySettingsScreen(
                             title = "识别并添加",
                             summary = smartHint.ifBlank { "支持放假区间与调休补课" },
                             onClick = {
-                                val parsed = com.haooz.chedule.data.SmartHolidayParser
-                                    .parse(smartText, year)
-                                if (parsed == null) {
+                                val parsedList = com.haooz.chedule.data.SmartHolidayParser
+                                    .parseMulti(smartText, year)
+                                if (parsedList.isEmpty()) {
                                     smartHint = "没看懂，换个说法试试"
                                     Toast.makeText(
                                         context,
-                                        "没看懂，试试「10月1日到10月7日放假」或「10月11日补10月7日的课」",
+                                        "试试「10月1日到10月7日放假」或「9月17日上9月21日的课，9月18日上9月22日的课」",
                                         Toast.LENGTH_LONG,
                                     ).show()
                                     return@ArrowPreference
                                 }
-                                val entryYear = parsed.startDate.take(4).toIntOrNull() ?: year
-                                var fw = -1
-                                var fwd = -1
-                                if (parsed.type == HolidayManager.TYPE_WORKSWAP &&
-                                    parsed.followDate != null
-                                ) {
-                                    val fd = LocalDate.parse(parsed.followDate)
-                                    fw = weekOfDate(fd.year, fd.monthValue, fd.dayOfMonth)
-                                        .toIntOrNull() ?: 1
-                                    fwd = fd.dayOfWeek.value
-                                }
-                                val newEntry = HolidayManager.Entry(
-                                    date = parsed.startDate,
-                                    endDate = parsed.endDate,
-                                    name = parsed.name,
-                                    type = parsed.type,
-                                    followWeek = fw,
-                                    followWeekday = fwd,
-                                    custom = true,
-                                )
-                                val saved = HolidayManager.updateEntries(
-                                    context, setOf(entryYear)
-                                ) { current ->
-                                    val updated = current
-                                        .mapValues { it.value.toMutableList() }
-                                        .toMutableMap()
-                                    // 该年份可能原本没有条目（首次添加），不能 getValue 否则直接崩
-                                    updated.getOrPut(entryYear) { mutableListOf() }
-                                    if (parsed.type == HolidayManager.TYPE_WORKSWAP) {
-                                        updated[entryYear] =
-                                            HolidayManager.withoutCustomWorkSwapsOnDate(
-                                                updated[entryYear]!!, parsed.startDate
-                                            ).toMutableList()
+                                var okCount = 0
+                                val summaries = ArrayList<String>()
+                                for (parsed in parsedList) {
+                                    val entryYear = parsed.startDate.take(4).toIntOrNull() ?: year
+                                    var fw = -1
+                                    var fwd = -1
+                                    if (parsed.type == HolidayManager.TYPE_WORKSWAP &&
+                                        parsed.followDate != null
+                                    ) {
+                                        val fd = LocalDate.parse(parsed.followDate)
+                                        fw = weekOfDate(fd.year, fd.monthValue, fd.dayOfMonth)
+                                            .toIntOrNull() ?: 1
+                                        fwd = fd.dayOfWeek.value
                                     }
-                                    updated.getOrPut(entryYear) { mutableListOf() }.add(newEntry)
-                                    updated.mapValues { (_, e) -> e.toList() }
+                                    val newEntry = HolidayManager.Entry(
+                                        date = parsed.startDate,
+                                        endDate = parsed.endDate,
+                                        name = parsed.name,
+                                        type = parsed.type,
+                                        followWeek = fw,
+                                        followWeekday = fwd,
+                                        custom = true,
+                                    )
+                                    val saved = HolidayManager.updateEntries(
+                                        context, setOf(entryYear)
+                                    ) { current ->
+                                        val updated = current
+                                            .mapValues { it.value.toMutableList() }
+                                            .toMutableMap()
+                                        updated.getOrPut(entryYear) { mutableListOf() }
+                                        if (parsed.type == HolidayManager.TYPE_WORKSWAP) {
+                                            updated[entryYear] =
+                                                HolidayManager.withoutCustomWorkSwapsOnDate(
+                                                    updated[entryYear]!!, parsed.startDate
+                                                ).toMutableList()
+                                        }
+                                        updated.getOrPut(entryYear) { mutableListOf() }.add(newEntry)
+                                        updated.mapValues { (_, e) -> e.toList() }
+                                    }
+                                    if (saved) {
+                                        okCount++
+                                        summaries.add(parsed.summary)
+                                    }
                                 }
-                                if (!saved) {
+                                if (okCount == 0) {
                                     Toast.makeText(
                                         context, "节假日数据无法读取，未覆盖原数据",
                                         Toast.LENGTH_LONG,
@@ -613,10 +620,10 @@ fun HolidaySettingsScreen(
                                 }
                                 reload()
                                 CourseReminderHelper.onHolidayDataChanged(context)
-                                smartHint = parsed.summary
+                                smartHint = summaries.joinToString("；")
                                 smartText = ""
                                 Toast.makeText(
-                                    context, "已添加：${parsed.summary}",
+                                    context, "已添加 $okCount 条：$smartHint",
                                     Toast.LENGTH_SHORT,
                                 ).show()
                             },

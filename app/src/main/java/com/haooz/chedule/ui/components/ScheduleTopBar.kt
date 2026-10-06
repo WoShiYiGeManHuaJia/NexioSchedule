@@ -340,39 +340,47 @@ private fun RefreshTopBarButton(
         contentAlignment = Alignment.Center,
     ) {
         androidx.compose.foundation.Canvas(
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(24.dp)
         ) {
             val tint = tintColor
-            val sw = 2.4.dp.toPx()
-            val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
-                width = sw,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
-            )
-            drawArc(
-                color = tint,
-                startAngle = 45f,
-                sweepAngle = 300f,
-                useCenter = false,
-                topLeft = androidx.compose.ui.geometry.Offset(sw, sw),
-                size = androidx.compose.ui.geometry.Size(
-                    size.width - sw * 2f,
-                    size.height - sw * 2f
-                ),
-                style = stroke
-            )
+            val sw = 2.6f.dp.toPx()
+            val r = (size.minDimension - sw) / 2f
             val cx = size.width / 2f
             val cy = size.height / 2f
-            val r = (size.width - sw * 2f) / 2f
-            val rad = Math.toRadians(45.0)
-            val px = cx + r * Math.cos(rad).toFloat()
-            val py = cy + r * Math.sin(rad).toFloat()
-            val tri = androidx.compose.ui.graphics.Path().apply {
-                moveTo(px + 6.0f, py - 4.0f)
-                lineTo(px - 2.0f, py - 8.5f)
-                lineTo(px + 1.5f, py + 6.0f)
+            val startAng = -60.0
+            val sweep = 300.0
+            // 主体：留缺口的圆环
+            drawArc(
+                color = tint,
+                startAngle = startAng.toFloat(),
+                sweepAngle = sweep.toFloat(),
+                useCenter = false,
+                topLeft = androidx.compose.ui.geometry.Offset(cx - r, cy - r),
+                size = androidx.compose.ui.geometry.Size(r * 2f, r * 2f),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = sw,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+            )
+            // 箭头：位于弧末端，沿顺时针切线方向，尺寸放大到能一眼认出
+            val endRad = Math.toRadians(startAng + sweep)
+            val px = cx + r * Math.cos(endRad).toFloat()
+            val py = cy + r * Math.sin(endRad).toFloat()
+            val tanRad = Math.toRadians(startAng + sweep + 90.0)
+            val tx = Math.cos(tanRad).toFloat()
+            val ty = Math.sin(tanRad).toFloat()
+            val nx = Math.cos(endRad).toFloat()
+            val ny = Math.sin(endRad).toFloat()
+            val len = 7.5f.dp.toPx()
+            val wid = 4.0f.dp.toPx()
+            val arrow = androidx.compose.ui.graphics.Path().apply {
+                moveTo(px + tx * len, py + ty * len)
+                lineTo(px - tx * len * 0.25f + nx * wid, py - ty * len * 0.25f + ny * wid)
+                lineTo(px - tx * len * 0.25f - nx * wid, py - ty * len * 0.25f - ny * wid)
                 close()
             }
-            drawPath(tri, tint)
+            drawPath(arrow, tint)
+        }
         }
     }
 }

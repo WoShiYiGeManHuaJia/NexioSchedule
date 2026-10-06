@@ -745,7 +745,7 @@ object IslandNotificationHelper {
         )
 
         val builder = Notification.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
             .setContentTitle(title)
             .setContentText(content)
             .setContentIntent(pendingIntent)
@@ -910,7 +910,7 @@ object IslandNotificationHelper {
         val content = "第3~4节｜博A201"
 
         val builder = Notification.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
             .setContentTitle(title)
             .setContentText(content)
             .setContentIntent(pendingIntent)

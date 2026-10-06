@@ -1354,7 +1354,7 @@ object CourseReminderHelper {
         // 课中只保留进度卡片，不挂动作按钮（点整卡打开课表即可）
         val notification = if (Build.VERSION.SDK_INT >= 36) {
             val builder = Notification.Builder(context, CHANNEL_LIVE_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification_calendar)
                 .setContentTitle(courseName)
                 .setContentText(infoLine)
                 .setStyle(Notification.BigTextStyle().bigText(expandedText))
@@ -1382,7 +1382,7 @@ object CourseReminderHelper {
         } else {
             // 低版本无 ProgressStyle：用普通进度条 + 提升请求降级
             NotificationCompat.Builder(context, CHANNEL_LIVE_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification_calendar)
                 .setContentTitle(courseName)
                 .setContentText(expandedText)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
@@ -1457,7 +1457,7 @@ object CourseReminderHelper {
             append("现在上课")
         }
         val startedNotification = NotificationCompat.Builder(context, CHANNEL_LIVE_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
             .setContentTitle(courseName)
             .setShortCriticalText(courseName)
             .setStyle(
@@ -1527,7 +1527,7 @@ object CourseReminderHelper {
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_REMINDER_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
             .setContentTitle(title)
             .setContentText(message.replace("\n", " "))
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
@@ -1593,7 +1593,7 @@ object CourseReminderHelper {
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_LIVE_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
             .setContentTitle(courseName)
             .setShortCriticalText(shortCriticalText)
             .setStyle(
@@ -1836,7 +1836,7 @@ object CourseReminderHelper {
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_LIVE_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
             .setContentTitle(courseName)
             .setShortCriticalText(shortCriticalText)
             .setStyle(
