@@ -304,6 +304,7 @@ private fun RefreshTopBarButton(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
+    val tintColor = MiuixTheme.colorScheme.onSurface
     var isRefreshing by remember { mutableStateOf(false) }
     val onClick: () -> Unit = {
         if (!isRefreshing) {
@@ -341,7 +342,7 @@ private fun RefreshTopBarButton(
         androidx.compose.foundation.Canvas(
             modifier = Modifier.size(22.dp)
         ) {
-            val tint = MiuixTheme.colorScheme.onSurface
+            val tint = tintColor
             val sw = 2.4.dp.toPx()
             val stroke = androidx.compose.ui.graphics.Stroke(
                 width = sw,
