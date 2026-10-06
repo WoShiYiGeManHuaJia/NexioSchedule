@@ -56,6 +56,11 @@ jobs:
           mkdir -p out
           find . -name "*.apk" -type f 2>/dev/null | while read f; do cp "$f" "out/$(basename "$f")"; done
           ls -lh out/ || echo "无 APK"
+          echo "--- apk 输出目录 ---" > buildlog_out.txt
+          ls -lh app/build/outputs/apk/*/ 2>/dev/null >> buildlog_out.txt || echo "(无)" >> buildlog_out.txt
+          echo "--- out 内容 ---" >> buildlog_out.txt
+          ls -lh out/ >> buildlog_out.txt
+          mkdir -p buildlog && mv buildlog_out.txt buildlog/out.txt
 
       - uses: actions/upload-artifact@v4
         with:

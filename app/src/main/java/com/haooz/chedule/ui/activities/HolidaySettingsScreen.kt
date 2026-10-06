@@ -595,14 +595,15 @@ fun HolidaySettingsScreen(
                                     val updated = current
                                         .mapValues { it.value.toMutableList() }
                                         .toMutableMap()
-                                    val all = updated.getValue(entryYear)
+                                    // 该年份可能原本没有条目（首次添加），不能 getValue 否则直接崩
+                                    updated.getOrPut(entryYear) { mutableListOf() }
                                     if (parsed.type == HolidayManager.TYPE_WORKSWAP) {
                                         updated[entryYear] =
                                             HolidayManager.withoutCustomWorkSwapsOnDate(
-                                                all, parsed.startDate
+                                                updated[entryYear]!!, parsed.startDate
                                             ).toMutableList()
                                     }
-                                    updated.getValue(entryYear).add(newEntry)
+                                    updated.getOrPut(entryYear) { mutableListOf() }.add(newEntry)
                                     updated.mapValues { (_, e) -> e.toList() }
                                 }
                                 if (!saved) {
