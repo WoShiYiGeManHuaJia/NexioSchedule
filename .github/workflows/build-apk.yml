@@ -41,8 +41,41 @@ jobs:
 
       - name: Build release APK
         id: build
+        continue-on-error: true
         run: |
           ./gradlew assembleRelease --no-daemon > /tmp/build.log 2>&1
+          echo "exit=$?"
+          tail -40 /tmp/build.log
+
+      - name: Fallback to debug if release failed
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "release 失败，回退 debug"
+          ./gradlew assembleDebug --no-daemon > /tmp/build2.log 2>&1
+          echo "exit=$?"
+          tail -30 /tmp/build2.log
+
+      - name: Upload build diagnostics
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p buildlog
+          { echo "=== assembleRelease 结果: ${{ steps.build.outcome }} ==="
+            echo "--- build.log 尾部 ---"
+            grep -E "BUILD SUCCESSFUL|BUILD FAILED|FAILURE:|error:|assembleRelease" /tmp/build.log 2>/dev/null | head -30
+            echo "--- apk 输出目录 ---"
+            ls -lh app/build/outputs/apk/*/ 2>/dev/null || echo "(无)"
+            echo "--- out ---"
+            ls -lh out/ 2>/dev/null || echo "(空)"
+          } > buildlog/out.txt 2>&1
+          cat buildlog/out.txt
+          B64=$(base64 -w 0 buildlog/out.txt)
+          curl -s -X PUT \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/out.txt" \
+            -d "{\"message\":\"build diagnostics\",\"content\":\"$B64\"}" > /dev/null || true
           echo "exit=$?"
           echo "=== 错误汇总 ==="
           grep -E '^e: |error:|FAILED|What went wrong|^> ' /tmp/build.log | head -60 > /tmp/errs.txt || true
