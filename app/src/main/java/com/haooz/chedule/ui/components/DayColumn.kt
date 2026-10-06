@@ -435,40 +435,58 @@ private fun CourseCardsLayer(
                 grid = grid
             )
             if (layout != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = layout.topDp.dp)
-                ) {
-                    CourseCard(
-                        course = course,
-                        touchState = touchState,
-                        isDark = isDark,
-                        isCurrentWeek = isCurrentWeekCourse,
-                        isHoliday = isHoliday && course.id !in holidayExemptCourseIds,
-                        isCourseCancelled = course.id in holidayCancelledCourseIds,
-                        isWorkSwap = isWorkSwap,
-                        hasMultipleCourses = renderData.hasHiddenCourses,
-                        wallpaperBackdrop = wallpaperBackdrop,
-                        cardBlurRadius = cardBlurRadius,
-                        cardAlpha = cardAlpha,
-                        cardSurfaceAlpha = cardSurfaceAlpha,
-                        cardHeightPerSection = cardHeightPerSection,
-                        customCardHeightDp = layout.heightDp,
-                        cardCornerRadius = cardCornerRadius,
-                        isTablet = isTablet,
-                        cardContentAlignment = cardContentAlignment,
-                        cardTextColor = cardTextColor,
-                        cardTextScale = cardTextScale,
-                        showClassroom = showClassroom,
-                        showTeacher = showTeacher,
-                        cardRefraction = cardRefraction,
-                        isDragging = isDragging,
-                        onClick = {
-                            onPendingChange(-1, -1)
-                            onCourseClick(course)
-                        },
-                    )
+                // 横穿午休/晚休分隔条的课程：按分隔带切成多段渲染，避免文字被"午休/晚休"遮住
+                val cardTop = layout.topDp
+                val cardBottom = layout.topDp + layout.heightDp
+                val breakBandHeight = run {
+                    val nextTop = grid.sectionTop[morningSections + 1]
+                    val firstDivider = grid.dividerY.getOrNull(0)
+                    if (nextTop != null && firstDivider != null) {
+                        (nextTop - firstDivider).takeIf { it > 0f } ?: 24f
+                    } else 24f
+                }
+                val segments = splitByBreakBands(
+                    top = cardTop,
+                    bottom = cardBottom,
+                    dividerY = grid.dividerY,
+                    bandHeight = breakBandHeight
+                )
+                segments.forEachIndexed { idx, seg ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .offset(y = seg.first.dp)
+                    ) {
+                        CourseCard(
+                            course = course,
+                            touchState = touchState,
+                            isDark = isDark,
+                            isCurrentWeek = isCurrentWeekCourse,
+                            isHoliday = isHoliday && course.id !in holidayExemptCourseIds,
+                            isCourseCancelled = course.id in holidayCancelledCourseIds,
+                            isWorkSwap = isWorkSwap,
+                            hasMultipleCourses = if (idx == 0) renderData.hasHiddenCourses else false,
+                            wallpaperBackdrop = wallpaperBackdrop,
+                            cardBlurRadius = cardBlurRadius,
+                            cardAlpha = cardAlpha,
+                            cardSurfaceAlpha = cardSurfaceAlpha,
+                            cardHeightPerSection = cardHeightPerSection,
+                            customCardHeightDp = seg.second - seg.first,
+                            cardCornerRadius = cardCornerRadius,
+                            isTablet = isTablet,
+                            cardContentAlignment = cardContentAlignment,
+                            cardTextColor = cardTextColor,
+                            cardTextScale = cardTextScale,
+                            showClassroom = showClassroom,
+                            showTeacher = showTeacher,
+                            cardRefraction = cardRefraction,
+                            isDragging = isDragging,
+                            onClick = {
+                                onPendingChange(-1, -1)
+                                onCourseClick(course)
+                            },
+                        )
+                    }
                 }
             }
             return@forEach
@@ -666,6 +684,36 @@ private data class CustomTimeLayout(
 )
 
 // 节内按时间比例插值；跨午/晚休用统一分钟→Y；超范围钳到列顶/底
+/**
+ * 将 [top, bottom) 的课程卡片按午休/晚休分隔带切成若干段。
+ * 分隔带区间为 [dividerY[i], dividerY[i] + bandHeight)，落在卡片内部的会被挖掉，
+ * 这样卡片文字就不会被压在"午休/晚休"条下面。
+ */
+private fun splitByBreakBands(
+    top: Float,
+    bottom: Float,
+    dividerY: List<Float>,
+    bandHeight: Float
+): List<Pair<Float, Float>> {
+    val out = ArrayList<Pair<Float, Float>>()
+    var cursor = top
+    for (d in dividerY) {
+        val bandTop = d
+        val bandBottom = d + bandHeight
+        if (bandTop > cursor + 0.5f && bandTop < bottom - 0.5f) {
+            out.add(cursor to bandTop)
+            cursor = bandBottom
+        }
+    }
+    if (bottom - cursor > 0.5f) {
+        out.add(cursor to bottom)
+    }
+    if (out.isEmpty()) {
+        out.add(top to bottom)
+    }
+    return out
+}
+
 private fun computeCustomTimeLayout(
     customStart: String?,
     customEnd: String?,
