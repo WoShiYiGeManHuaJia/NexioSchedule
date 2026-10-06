@@ -1,17 +1,62 @@
-=== assembleRelease 结果: failure ===
---- build.log 尾部 ---
-Calculating task graph as no cached configuration is available for tasks: assembleRelease
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:532:58 Syntax error: Expecting '"'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:532:58 Syntax error: Expecting ','.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:533:4 Syntax error: Expecting '"'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:533:4 Syntax error: Expecting ','.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:534:44 Syntax error: Expecting '"'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:534:44 Syntax error: Expecting ','.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:535:4 Syntax error: Expecting '"'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/activities/HolidaySettingsScreen.kt:535:4 Syntax error: Expecting ','.
-FAILURE: Build completed with 2 failures.
-BUILD FAILED in 2m 9s
+commit: 454eee4
+gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
---- out ---
-(空)
+--- 编译错误 ---
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:32:27 Unresolved reference 'rememberCoroutineScope'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:306:36 Unresolved reference 'rememberCoroutineScope'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:342:38 Unresolved reference 'Extended'.
+FAILURE: Build completed with 2 failures.
+BUILD FAILED in 1m 43s
+--- build.log 尾部 ---
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:validateSigningRelease' (registered by plugin 'com.android.internal.application').
+> Keystore file '/home/runner/.config/.android/debug.keystore' not found for signing config 'release'.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 1m 43s
+31 actionable tasks: 31 executed
+Configuration cache entry stored.
+--- debug 回退日志尾部 ---
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:342:38 Unresolved reference 'Extended'.
+
+[Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 7s
+32 actionable tasks: 24 executed, 8 from cache
+Configuration cache entry stored.
