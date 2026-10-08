@@ -4,29 +4,35 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * 单人自用版：真·刷新课表。
  *
- * 从公开仓库拉 weeks_cache.json（路由器定时跑出来的最新课表），
- * 聚合成 Course 后写进本地仓库。成功/失败都会把真实结果返回给调用方，
- * 不做任何「假装成功」的兜底。
+ * 手机直连学校教务接口抓课表（不再依赖路由器中转），聚合成 Course 后写进本地仓库。
+ * 成功/失败都会把真实结果返回给调用方，不做任何「假装成功」的兜底；
+ * 直连失败时明确报错且保留现有课表，绝不用旧数据覆盖。
  */
 object BuiltinCourseSync {
+
+    data class SyncResult(
+        val ok: Boolean,
+        val message: String,
+        val rawCount: Int = 0,
+        val courseCount: Int = 0,
+        val changed: Boolean = false,
+    )
+
+    private val COLORS = longArrayOf(
+        0xFF4CAF50L, 0xFF2196F3L, 0xFFFF9800L, 0xFFF44336L, 0xFFE6B422L,
+        0xFFE91E63L, 0xFF00BCD4L, 0xFF3F51B5L, 0xFFAB47BCL, 0xFF009688L, 0xFF673AB7L
+    )
 
     suspend fun sync(context: Context): SyncResult = withContext(Dispatchers.IO) {
         try {
             // 只走手机直连教务接口，不再回落 CDN。
-            //
             // 原因：路由器已停用，weeks_cache.json 永久停在 9-16（第2周），
             // 回落只会拿三周前的死数据覆盖当前课表——比不刷新更有害。
             // 现在直连失败就明确报错，课表保持原样不动。
-            //
-            // 接口是教育网内网地址：手机连校园网 WiFi 时能通，4G/5G 连不上。
             val textSure: String = try {
                 DirectKebiaoFetcher.fetchAsWeeksCacheJson(context)
             } catch (e: Exception) {
