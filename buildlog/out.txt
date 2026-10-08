@@ -1,41 +1,71 @@
-commit: 397278b
+commit: 5f73d02
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
-total 3.2M
--rw-r--r-- 1 runner runner 3.2M Oct  8 02:40 app-release.apk
-drwxr-xr-x 4 runner runner 4.0K Oct  8 02:40 baselineProfiles
--rw-r--r-- 1 runner runner  714 Oct  8 02:40 output-metadata.json
+(无)
 --- 编译错误 ---
-BUILD SUCCESSFUL in 6m 13s
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:21:41 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:21:54 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:33:36 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:39:39 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:100:51 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:112:29 Unresolved reference 'COLORS'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:112:29 Cannot infer type for type parameter 'V'. Specify it explicitly.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:112:69 Unresolved reference 'COLORS'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:145:13 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:157:13 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:317:47 Unresolved reference 'message'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:318:22 Unresolved reference 'show'.
+FAILURE: Build failed with an exception.
+BUILD FAILED in 2m 16s
 --- build.log 尾部 ---
-w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:35 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
-w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:79 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
-w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/internal/Paint.kt:9:10 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
-w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/internal/Paint.kt:15:10 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:39:39 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:100:51 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:112:29 Unresolved reference 'COLORS'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:112:29 Cannot infer type for type parameter 'V'. Specify it explicitly.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:112:69 Unresolved reference 'COLORS'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:145:13 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:157:13 Unresolved reference 'SyncResult'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:317:47 Unresolved reference 'message'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:318:22 Unresolved reference 'show'.
 
-> Task :app:processReleaseJavaRes
-> Task :app:mergeReleaseJavaResource
-> Task :app:compileReleaseJavaWithJavac
-> Task :app:mergeReleaseGeneratedProguardFiles
-> Task :app:expandReleaseArtProfileWildcards
-> Task :app:generateReleaseLintVitalReportModel
-> Task :app:produceReleaseComposeMapping
-> Task :app:reportReleaseComposeMappingErrors
-> Task :app:lintVitalAnalyzeRelease
-> Task :app:minifyReleaseWithR8
-> Task :app:convertShrunkResourcesToBinaryRelease
-> Task :app:optimizeReleaseResources
-> Task :app:mergeReleaseComposeMapping
-> Task :app:compileReleaseArtProfile
-> Task :app:lintVitalReportRelease
-> Task :app:lintVitalRelease
-> Task :app:packageRelease
-> Task :app:assembleRelease
-> Task :app:createReleaseApkListingFileRedirect
+> Task :app:compileReleaseKotlin FAILED
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
-BUILD SUCCESSFUL in 6m 13s
-54 actionable tasks: 54 executed
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 16s
+36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:318:22 Unresolved reference 'show'.
+
+[Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 53s
+32 actionable tasks: 24 executed, 8 from cache
+Configuration cache entry stored.
