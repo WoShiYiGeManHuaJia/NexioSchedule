@@ -310,12 +310,40 @@ private fun RefreshTopBarButton(
         if (!isRefreshing) {
             scope.launch {
                 isRefreshing = true
-                val result =
+                // 点击瞬间就给反馈：复用同一个 Toast，先显示「正在刷新」，
+                // 完成后原地换成结果文案，避免用户以为点了没反应。
+                val toast = android.widget.Toast.makeText(
+                    context, "正在刷新…", android.widget.Toast.LENGTH_SHORT
+                )
+                // 单次 Toast 只有约 2 秒就消失，而直连教务要十几秒，
+                // 中途又会变成「没反应」。所以循环续期，直到出结果才停止。
+                var keepTicker = true
+                val ticker = scope.launch {
+                    while (keepTicker) {
+                        toast.show()
+                        kotlinx.coroutines.delay(1800)
+                    }
+                }
+                val result = try {
                     com.haooz.chedule.data.BuiltinCourseSync.sync(context)
+                } catch (e: Exception) {
+                    // 兜底：sync 内部已全面 try-catch，但万一漏出异常，
+                    // 也要保证提示能刷出来，不能卡在「正在刷新…」
+                    com.haooz.chedule.data.BuiltinCourseSync.SyncResult(
+                        false, "刷新异常：" + (e.message ?: e.javaClass.simpleName)
+                    )
+                } finally {
+                    keepTicker = false
+                    ticker.cancel()
+                }
                 isRefreshing = false
-                android.widget.Toast
-                    .makeText(context, result.message, android.widget.Toast.LENGTH_SHORT)
-                    .show()
+                toast.setText((if (result.ok) "✓ " else "✗ ") + result.message)
+                toast.duration = if (result.ok) {
+                    android.widget.Toast.LENGTH_SHORT
+                } else {
+                    android.widget.Toast.LENGTH_LONG
+                }
+                toast.show()
             }
         }
     }
@@ -335,7 +363,11 @@ private fun RefreshTopBarButton(
             .size(42.dp)
             .graphicsLayer { rotationZ = rotation }
             .clip(CircleShape)
-            .background(MiuixTheme.colorScheme.onSurface.copy(alpha = 0.10f + 0.08f * backdropAlpha))
+            .background(
+                MiuixTheme.colorScheme.onSurface.copy(
+                    alpha = 0.10f + 0.08f * backdropAlpha + if (isRefreshing) 0.12f else 0f
+                )
+            )
             .clickable(enabled = !isRefreshing) { onClick() },
         contentAlignment = Alignment.Center,
     ) {
