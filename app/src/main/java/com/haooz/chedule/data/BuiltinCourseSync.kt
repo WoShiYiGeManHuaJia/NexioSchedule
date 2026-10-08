@@ -84,13 +84,29 @@ object BuiltinCourseSync {
 
     suspend fun sync(context: Context): SyncResult = withContext(Dispatchers.IO) {
         try {
-            val (text0, fetchErr) = fetchText()
-            if (text0 == null) {
-                return@withContext SyncResult(false, "全部源都取不到：$fetchErr")
+            // ① 优先手机直连教务接口（不依赖路由器中转）
+            //    接口是教育网内网地址，手机连校园网 WiFi 时能通，4G 多半连不上；
+            //    连不上就回落 ② 的 CDN 源，拿路由器上一次推的结果。
+            var viaDirect = false
+            var directErr = ""
+            var text: String? = null
+            try {
+                text = DirectKebiaoFetcher.fetchAsWeeksCacheJson(context)
+                viaDirect = true
+            } catch (e: Exception) {
+                directErr = "直连教务失败：" + (e.message ?: e.javaClass.simpleName)
             }
-            val text = text0
+            if (text == null) {
+                val (t, err) = fetchText()
+                if (t == null) {
+                    return@withContext SyncResult(false, "$directErr；全部源也取不到：$err")
+                }
+                text = t
+            }
+            val textSure = text!!
+            val src = if (viaDirect) "教务直连" else "CDN"
 
-            val root = JSONObject(text)
+            val root = JSONObject(textSure)
             val weeks = root.optJSONObject("weeks")
                 ?: return@withContext SyncResult(false, "数据里没有 weeks 字段")
 
@@ -201,9 +217,9 @@ object BuiltinCourseSync {
             SyncResult(
                 ok = true,
                 message = if (changed) {
-                    "已更新 ${courses.size} 门课（原始 $rawCount 条）"
+                    "[$src] 已更新 ${courses.size} 门课（原始 $rawCount 条）"
                 } else {
-                    "已是最新：${courses.size} 门课，无变化"
+                    "[$src] 已是最新：${courses.size} 门课，无变化"
                 },
                 rawCount = rawCount,
                 courseCount = courses.size,
