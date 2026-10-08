@@ -99,6 +99,7 @@ object DirectKebiaoFetcher {
      * 交给 BuiltinCourseSync 复用既有解析（含线上标识识别）。
      */
     fun fetchAsWeeksCacheJson(context: Context): String {
+        precheck()
         val c = loadCredential(context)
         val q = "userNo=${enc(c.userNo)}&pwd=${enc(c.pwdEnc)}" +
             "&encode=1&captchaData=&codeVal="
@@ -163,6 +164,46 @@ object DirectKebiaoFetcher {
     }
 
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
+
+    /**
+     * 把异常翻译成人话，直接显示在 Toast 上。
+     * 用户最需要区分的是「没连校园网」和「账号被拒」，这两者处理方式完全不同。
+     */
+    fun hintOf(e: Exception): String {
+        val m = e.message ?: ""
+        val n = e.javaClass.simpleName ?: ""
+        return when {
+            // 连不上：超时 / 拒绝 / 无法解析 / 无路由
+            "Timeout" in n || "SocketTimeout" in n || "ConnectException" in n ||
+                "UnknownHost" in n || "NoRoute" in n || "ECONNREFUSED" in m ||
+                "ETIMEDOUT" in m || "ENETUNREACH" in m || "timeout" in m.lowercase() ->
+                "连不上教务服务器（$BASE）。这是教育网内网地址，请连校园网 WiFi 后再刷新"
+
+            "UnknownHost" in n || "Unable to resolve host" in m ->
+                "解析不到教务服务器地址，请检查网络"
+
+            m.startsWith("登录失败") -> m
+
+            m.contains("未拉到任何周次") -> "登录成功但没拉到课表，教务可能维护中"
+
+            m.startsWith("HTTP ") -> "教务接口返回异常：$m"
+
+            else -> "刷新失败：$m"
+        }
+    }
+
+    /**
+     * 网络预检：正式登录前先 TCP 探一下，连不上就快速失败。
+     * 避免用户在 4G 下白等 15 秒超时才知道连不上。
+     */
+    private fun precheck() {
+        val sock = java.net.Socket()
+        try {
+            sock.connect(java.net.InetSocketAddress("222.243.161.213", 81), 6000)
+        } finally {
+            runCatching { sock.close() }
+        }
+    }
 
     /** 与 Python 侧一致：classTime 每 2 位一节，取 s[i+1:i+3]，i 步长 2 */
     private fun parseSecs(s: String): JSONArray {

@@ -18,93 +18,21 @@ import java.net.URL
  */
 object BuiltinCourseSync {
 
-    /**
-     * 多源兜底：raw.githubusercontent.com 在国内常常连不上，
-     * 所以先走 jsDelivr CDN，再走 GitHub Pages，最后才是 raw。
-     * 任何一个源拿到有效数据就停，全部失败才报失败——绝不假装成功。
-     */
-    private val SOURCES = listOf(
-        "https://cdn.jsdelivr.net/gh/WoShiYiGeManHuaJia/kebiao-page@main/weeks_cache.json",
-        "https://woshiyigemanhuajia.github.io/kebiao-page/weeks_cache.json",
-        "https://raw.githubusercontent.com/WoShiYiGeManHuaJia/kebiao-page/main/weeks_cache.json",
-    )
-
-    /** 拉取文本：逐源尝试，返回 (文本, 失败原因列表) */
-    private fun fetchText(): Pair<String?, String> {
-        val errs = ArrayList<String>()
-        for (url in SOURCES) {
-            var conn: java.net.HttpURLConnection? = null
-            try {
-                conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 12_000
-                    readTimeout = 20_000
-                    requestMethod = "GET"
-                    instanceFollowRedirects = true
-                    setRequestProperty("User-Agent", "Mozilla/5.0")
-                    setRequestProperty("Cache-Control", "no-cache")
-                }
-                val code = conn.responseCode
-                if (code !in 200..299) {
-                    errs.add("${hostOf(url)} HTTP $code")
-                    conn.disconnect()
-                    continue
-                }
-                val text = BufferedReader(
-                    InputStreamReader(conn.inputStream, Charsets.UTF_8)
-                ).use { it.readText() }
-                conn.disconnect()
-                if (text.isBlank() || !text.trimStart().startsWith("{")) {
-                    errs.add("${hostOf(url)} 内容异常")
-                    continue
-                }
-                return Pair(text, "")
-            } catch (e: Exception) {
-                errs.add("${hostOf(url)} ${e.javaClass.simpleName}")
-                try { conn?.disconnect() } catch (_: Exception) {}
-            }
-        }
-        return Pair(null, errs.joinToString("；"))
-    }
-
-    private fun hostOf(url: String): String =
-        url.removePrefix("https://").takeWhile { it != '/' }
-
-    data class SyncResult(
-        val ok: Boolean,
-        val message: String,
-        val rawCount: Int = 0,
-        val courseCount: Int = 0,
-        val changed: Boolean = false,
-    )
-
-    private val COLORS = longArrayOf(
-        0xFF4CAF50L, 0xFF2196F3L, 0xFFFF9800L, 0xFFF44336L, 0xFFE6B422L,
-        0xFFE91E63L, 0xFF00BCD4L, 0xFF3F51B5L, 0xFFAB47BCL, 0xFF009688L, 0xFF673AB7L
-    )
-
     suspend fun sync(context: Context): SyncResult = withContext(Dispatchers.IO) {
         try {
-            // ① 优先手机直连教务接口（不依赖路由器中转）
-            //    接口是教育网内网地址，手机连校园网 WiFi 时能通，4G 多半连不上；
-            //    连不上就回落 ② 的 CDN 源，拿路由器上一次推的结果。
-            var viaDirect = false
-            var directErr = ""
-            var text: String? = null
-            try {
-                text = DirectKebiaoFetcher.fetchAsWeeksCacheJson(context)
-                viaDirect = true
+            // 只走手机直连教务接口，不再回落 CDN。
+            //
+            // 原因：路由器已停用，weeks_cache.json 永久停在 9-16（第2周），
+            // 回落只会拿三周前的死数据覆盖当前课表——比不刷新更有害。
+            // 现在直连失败就明确报错，课表保持原样不动。
+            //
+            // 接口是教育网内网地址：手机连校园网 WiFi 时能通，4G/5G 连不上。
+            val textSure: String = try {
+                DirectKebiaoFetcher.fetchAsWeeksCacheJson(context)
             } catch (e: Exception) {
-                directErr = "直连教务失败：" + (e.message ?: e.javaClass.simpleName)
+                return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
             }
-            if (text == null) {
-                val (t, err) = fetchText()
-                if (t == null) {
-                    return@withContext SyncResult(false, "$directErr；全部源也取不到：$err")
-                }
-                text = t
-            }
-            val textSure = text!!
-            val src = if (viaDirect) "教务直连" else "CDN"
+            val src = "教务直连"
 
             val root = JSONObject(textSure)
             val weeks = root.optJSONObject("weeks")
