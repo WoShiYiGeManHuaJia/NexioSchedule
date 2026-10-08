@@ -306,44 +306,33 @@ private fun RefreshTopBarButton(
     val scope = rememberCoroutineScope()
     val tintColor = MiuixTheme.colorScheme.onSurface
     var isRefreshing by remember { mutableStateOf(false) }
+    var showStatusDialog by remember { mutableStateOf(false) }
+    var statusText by remember { mutableStateOf("") }
+    var statusDone by remember { mutableStateOf(false) }
     val onClick: () -> Unit = {
         if (!isRefreshing) {
             scope.launch {
                 isRefreshing = true
-                // 点击瞬间就给反馈：复用同一个 Toast，先显示「正在刷新」，
-                // 完成后原地换成结果文案，避免用户以为点了没反应。
-                val toast = android.widget.Toast.makeText(
-                    context, "正在刷新…", android.widget.Toast.LENGTH_SHORT
-                )
-                // 单次 Toast 只有约 2 秒就消失，而直连教务要十几秒，
-                // 中途又会变成「没反应」。所以循环续期，直到出结果才停止。
-                var keepTicker = true
-                val ticker = scope.launch {
-                    while (keepTicker) {
-                        toast.show()
-                        kotlinx.coroutines.delay(1800)
-                    }
-                }
+                // 点击瞬间就弹对话框，先显示「正在刷新…」，完成后原地换成结果。
+                statusText = "正在刷新…"
+                statusDone = false
+                showStatusDialog = true
                 val result = try {
                     com.haooz.chedule.data.BuiltinCourseSync.sync(context)
                 } catch (e: Exception) {
-                    // 兜底：sync 内部已全面 try-catch，但万一漏出异常，
-                    // 也要保证提示能刷出来，不能卡在「正在刷新…」
                     com.haooz.chedule.data.BuiltinCourseSync.SyncResult(
                         false, "刷新异常：" + (e.message ?: e.javaClass.simpleName)
                     )
-                } finally {
-                    keepTicker = false
-                    ticker.cancel()
                 }
                 isRefreshing = false
-                toast.setText((if (result.ok) "✓ " else "✗ ") + result.message)
-                toast.duration = if (result.ok) {
-                    android.widget.Toast.LENGTH_SHORT
-                } else {
-                    android.widget.Toast.LENGTH_LONG
+                statusText = (if (result.ok) "✓ " else "✗ ") + result.message
+                statusDone = true
+                // 成功停 2.5 秒自动关；失败一直留着直到用户点掉，
+                // 避免错误信息一闪而过。
+                if (result.ok) {
+                    kotlinx.coroutines.delay(2500)
+                    showStatusDialog = false
                 }
-                toast.show()
             }
         }
     }
@@ -412,6 +401,44 @@ private fun RefreshTopBarButton(
                 close()
             }
             drawPath(arrow, tint)
+        }
+    }
+
+    // 刷新状态用界面内对话框承载，不再用 Toast。
+    // Toast 单次只有约 2 秒，且高频 show 会被系统排队/限流直接丢掉，
+    // 而直连教务要十几秒——结果一闪而过，用户根本看不到。
+    // 对话框则一直停留到被关掉，成功自动关，失败等用户确认。
+    if (showStatusDialog) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { if (statusDone) showStatusDialog = false },
+            properties = androidx.compose.ui.window.DialogProperties(
+                dismissOnBackPress = statusDone,
+                dismissOnClickOutside = statusDone,
+            ),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.82f)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+                    .background(MiuixTheme.colorScheme.surface)
+                    .padding(horizontal = 22.dp, vertical = 24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (!statusDone) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.5.dp,
+                        )
+                        Spacer(modifier = Modifier.width(14.dp))
+                    }
+                    androidx.compose.material3.Text(
+                        text = statusText,
+                        fontSize = 15.sp,
+                        color = MiuixTheme.colorScheme.onSurface,
+                    )
+                }
+            }
         }
     }
 }
