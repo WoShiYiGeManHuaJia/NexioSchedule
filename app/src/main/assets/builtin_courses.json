@@ -2,7 +2,7 @@
  "meta": {
   "semester": "2026-2027-1",
   "current_week": 2,
-  "generated": "2026-10-06 02:38:56",
+  "generated": "2026-10-07 00:00:00",
   "course_count": 17,
   "total_weeks": 20,
   "start_date": "2026/09/07"
@@ -66,8 +66,8 @@
    "scheduleId": "",
    "lastModified": 1759000000001,
    "isCustomTime": true,
-   "customStartTime": "14:30",
-   "customEndTime": "18:10"
+   "customStartTime": "14:00",
+   "customEndTime": "17:40"
   },
   {
    "id": "kb_003",
@@ -93,8 +93,8 @@
    "scheduleId": "",
    "lastModified": 1759000000002,
    "isCustomTime": true,
-   "customStartTime": "19:30",
-   "customEndTime": "21:10"
+   "customStartTime": "19:00",
+   "customEndTime": "20:40"
   },
   {
    "id": "kb_004",
@@ -183,8 +183,8 @@
    "scheduleId": "",
    "lastModified": 1759000000005,
    "isCustomTime": true,
-   "customStartTime": "14:30",
-   "customEndTime": "16:10"
+   "customStartTime": "14:00",
+   "customEndTime": "15:40"
   },
   {
    "id": "kb_007",
@@ -214,8 +214,8 @@
    "scheduleId": "",
    "lastModified": 1759000000006,
    "isCustomTime": true,
-   "customStartTime": "16:30",
-   "customEndTime": "21:10"
+   "customStartTime": "16:00",
+   "customEndTime": "20:40"
   },
   {
    "id": "kb_008",
@@ -276,8 +276,8 @@
    "scheduleId": "",
    "lastModified": 1759000000008,
    "isCustomTime": true,
-   "customStartTime": "14:30",
-   "customEndTime": "18:10"
+   "customStartTime": "14:00",
+   "customEndTime": "17:40"
   },
   {
    "id": "kb_010",
@@ -306,8 +306,8 @@
    "scheduleId": "",
    "lastModified": 1759000000009,
    "isCustomTime": true,
-   "customStartTime": "19:30",
-   "customEndTime": "21:10"
+   "customStartTime": "19:00",
+   "customEndTime": "20:40"
   },
   {
    "id": "kb_011",
@@ -368,8 +368,8 @@
    "scheduleId": "",
    "lastModified": 1759000000011,
    "isCustomTime": true,
-   "customStartTime": "14:30",
-   "customEndTime": "18:10"
+   "customStartTime": "14:00",
+   "customEndTime": "17:40"
   },
   {
    "id": "kb_013",
@@ -398,8 +398,8 @@
    "scheduleId": "",
    "lastModified": 1759000000012,
    "isCustomTime": true,
-   "customStartTime": "19:30",
-   "customEndTime": "21:10"
+   "customStartTime": "19:00",
+   "customEndTime": "20:40"
   },
   {
    "id": "kb_014",
@@ -489,8 +489,8 @@
    "scheduleId": "",
    "lastModified": 1759000000015,
    "isCustomTime": true,
-   "customStartTime": "14:30",
-   "customEndTime": "18:10"
+   "customStartTime": "14:00",
+   "customEndTime": "17:40"
   },
   {
    "id": "kb_017",

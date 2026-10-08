@@ -51,6 +51,7 @@ class CourseRepository private constructor(context: Context) {
         migrateScheduleTimeConfigBindingsIfNeeded()
         migrateSchedulesIntoDefaultFolder()
         loadBuiltinCoursesIfNeeded()
+        applyBuiltinScheduleSetup()
     }
 
     /**
@@ -93,6 +94,97 @@ class CourseRepository private constructor(context: Context) {
         } catch (e: Exception) {
             android.util.Log.e("CourseRepository", "内置课表导入失败", e)
             // 失败不打标记，下次启动再试
+        }
+    }
+
+    /**
+     * 单人自用版：内置作息与校历（只跑一次，之后用户可自行修改）。
+     *
+     * 节数 4/4/2；第5节 14:00、第7节 16:00、第9节 19:00 上课。
+     * 校历：9/25-10/7 放假；9/20 上第4周周一、10/10 上第4周周二、
+     *       10/17 上第4周周三、10/24 上第5周周二、10/31 上第5周周三的课。
+     */
+    private fun applyBuiltinScheduleSetup() {
+        if (prefs.getBoolean(KEY_BUILTIN_SCHEDULE_SETUP, false)) return
+        try {
+            // ── 作息：4/4/2，每节 45 分钟、小课间 10 分钟，第7节前多 15 分钟 ──
+            val sectionTimes = linkedMapOf(
+                "morning_1" to "08:00-08:45",
+                "morning_2" to "08:55-09:40",
+                "morning_3" to "10:00-10:45",
+                "morning_4" to "10:55-11:40",
+                "afternoon_1" to "14:00-14:45",   // 第5节
+                "afternoon_2" to "14:55-15:40",   // 第6节
+                "afternoon_3" to "16:00-16:45",   // 第7节
+                "afternoon_4" to "16:55-17:40",   // 第8节
+                "evening_1" to "19:00-19:45",     // 第9节
+                "evening_2" to "19:55-20:40",     // 第10节
+            )
+            val configId = getCurrentTimeConfigId()
+            val base = if (configId != 0L) getTimeConfig(configId) else TimeConfig(id = 0L, name = "默认配置")
+            val newConfig = base.copy(
+                morningSections = 4,
+                afternoonSections = 4,
+                eveningSections = 2,
+                quickTimeEnabled = false,
+                sectionTimes = sectionTimes,
+            )
+            val targetId = if (configId != 0L && configId in getTimeConfigIds()) {
+                saveTimeConfig(newConfig); configId
+            } else {
+                addTimeConfig(newConfig)
+            }
+            setScheduleTimeConfigId(getCurrentScheduleId(), targetId)
+
+            // ── 课程时间对齐新作息（按首节上课、末节下课重算）──
+            // 资产里的课表已按新作息写过一次；这里再兜一遍已导入的课，
+            // 避免侧边时间条与课程块错位（旧数据是 14:30/19:30 起）。
+            val times = mapOf(
+                1 to ("08:00" to "08:45"), 2 to ("08:55" to "09:40"),
+                3 to ("10:00" to "10:45"), 4 to ("10:55" to "11:40"),
+                5 to ("14:00" to "14:45"), 6 to ("14:55" to "15:40"),
+                7 to ("16:00" to "16:45"), 8 to ("16:55" to "17:40"),
+                9 to ("19:00" to "19:45"), 10 to ("19:55" to "20:40"),
+            )
+            val fixed = getAllCourses().map { c ->
+                val first = times[c.startSection]?.first ?: return@map c
+                val last = times[c.endSection]?.second ?: return@map c
+                c.copy(isCustomTime = true, customStartTime = first, customEndTime = last)
+            }
+            if (fixed.isNotEmpty()) saveCourses(fixed)
+
+            // ── 校历：放假 9/25-10/7 + 5 条调休补课 ──
+            val entries = listOf(
+                HolidayManager.Entry(
+                    date = "2026-09-25", endDate = "2026-10-07",
+                    name = "国庆中秋放假", type = HolidayManager.TYPE_HOLIDAY,
+                ),
+                HolidayManager.Entry(
+                    date = "2026-09-20", name = "补第4周周一的课",
+                    type = HolidayManager.TYPE_WORKSWAP, followWeek = 4, followWeekday = 1,
+                ),
+                HolidayManager.Entry(
+                    date = "2026-10-10", name = "补第4周周二的课",
+                    type = HolidayManager.TYPE_WORKSWAP, followWeek = 4, followWeekday = 2,
+                ),
+                HolidayManager.Entry(
+                    date = "2026-10-17", name = "补第4周周三的课",
+                    type = HolidayManager.TYPE_WORKSWAP, followWeek = 4, followWeekday = 3,
+                ),
+                HolidayManager.Entry(
+                    date = "2026-10-24", name = "补第5周周二的课",
+                    type = HolidayManager.TYPE_WORKSWAP, followWeek = 5, followWeekday = 2,
+                ),
+                HolidayManager.Entry(
+                    date = "2026-10-31", name = "补第5周周三的课",
+                    type = HolidayManager.TYPE_WORKSWAP, followWeek = 5, followWeekday = 3,
+                ),
+            )
+            HolidayManager.save(appContext, 2026, entries)
+
+            prefs.edit { putBoolean(KEY_BUILTIN_SCHEDULE_SETUP, true) }
+        } catch (e: Exception) {
+            android.util.Log.e("CourseRepository", "内置作息/校历写入失败", e)
         }
     }
 
@@ -290,6 +382,8 @@ class CourseRepository private constructor(context: Context) {
         private const val KEY_CURRENT_SCHEDULE_ID = "current_schedule_id"
         private const val KEY_BUILTIN_LOADED = "builtin_courses_loaded"
         private const val KEY_BUILTIN_SEMESTER = "builtin_semester"
+    /** 内置作息与校历只灌一次；之后用户自行修改不会被覆盖 */
+    private const val KEY_BUILTIN_SCHEDULE_SETUP = "builtin_schedule_setup_v1"
         private const val KEY_SCHEDULE_NAMES = "schedule_names"
         private const val KEY_SCHEDULE_FOLDERS = "schedule_folders"
         /** 首次引入文件夹时的归档标记；只跑一次 */
