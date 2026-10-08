@@ -375,12 +375,6 @@ fun SettingsScreen(
                                         context.startActivity(intent)
                                     }
                                 )
-                                ArrowPreference(
-                                    title = "排班模式",
-                                    summary = "同时对比多个课表的排班情况",
-                                    holdDownState = showShiftModeConfirmDialog,
-                                    onClick = { showShiftModeConfirmDialog = true }
-                                )
                             }
                         }
                     }
@@ -441,50 +435,6 @@ fun SettingsScreen(
                 }
 
                 if (!isShiftMode) {
-                    item(key = "data_manage") {
-                        SmallTitle(
-                            text = "数据管理",
-                        )
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            insideMargin = PaddingValues(0.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                ArrowPreference(
-                                    title = "课表导入",
-                                    onClick = {
-                                        FeatureLog.import("open")
-                                        context.startActivity(
-                                            com.haooz.chedule.ui.activities.BackupAndMigrationActivity.importIntent(context)
-                                        )
-                                    }
-                                )
-                                ArrowPreference(
-                                    title = "课表导出",
-                                    onClick = {
-                                        FeatureLog.backup("open_export")
-                                        context.startActivity(
-                                            com.haooz.chedule.ui.activities.BackupAndMigrationActivity.exportIntent(context)
-                                        )
-                                    }
-                                )
-                                ArrowPreference(
-                                    title = "课表备份",
-                                    onClick = {
-                                        FeatureLog.backup("open_backup")
-                                        context.startActivity(
-                                            com.haooz.chedule.ui.activities.BackupAndMigrationActivity.backupIntent(context)
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                if (!isShiftMode) {
                     item(key = "others_title") {
                         SmallTitle(
                             text = "其他",
@@ -496,16 +446,6 @@ fun SettingsScreen(
                             Column(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                ArrowPreference(
-                                    title = "开启新学期",
-                                    summary = "复用当前课表设置，创建空课程的新课表",
-                                    holdDownState = showNewSemesterDialog,
-                                    onClick = {
-                                        FeatureLog.t("设置", "new_semester_dialog")
-                                        newSemesterName = ""
-                                        showNewSemesterDialog = true
-                                    }
-                                )
                             }
                         }
                     }

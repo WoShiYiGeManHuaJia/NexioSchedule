@@ -1047,13 +1047,10 @@ fun MainScheduleScreen(
                                         onPopupStateChange(true)
                                     }
                                 }
+                            // 单人只读版：点空白格不再弹「添加课程」框
                             val stableOnEmptyClick: (Int) -> Unit =
                                 remember(dayOfWeek, addDayForCol, addWeekForCol) {
-                                    { section ->
-                                        val defaultWeeks =
-                                            if (addWeekForCol > 0) setOf(addWeekForCol) else emptySet()
-                                        viewModel.showAddDialog(addDayForCol, section, null, defaultWeeks)
-                                    }
+                                    { _ -> }
                                 }
                             val stableOnEmptyLongPress: (Int, Float, Float, Float, Float) -> Unit =
                                 remember(dayOfWeek, addDayForCol, addWeekForCol, onEmptyLongPress) {
@@ -1361,39 +1358,8 @@ fun MainScheduleScreen(
             }
         }
 
-        val detailEndAction: @Composable () -> Unit = {
-            val scope = rememberCoroutineScope()
-            val material = LocalSheetTopBarMaterial.current
-            LiquidTopBarButton(
-                onClick = {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
-                    val course = selectedCourse ?: selectedCourses.firstOrNull()
-                    showCourseDetail = false
-                    // 等关闭动画后再开添加弹窗
-                    scope.launch {
-                        delay(100.milliseconds)
-                        if (course != null) {
-                            viewModel.showAddDialog(
-                                course.dayOfWeek,
-                                course.startSection,
-                                course.endSection
-                            )
-                        } else {
-                            viewModel.showAddDialog()
-                        }
-                    }
-                },
-                backdrop = LocalSheetContentBackdrop.current ?: liquidGlassBackdrop!!,
-                icon = MiuixIcons.Add,
-                contentDescription = "添加课程",
-                modifier = Modifier.padding(end = if (isTablet) 16.dp else 18.dp),
-                iconSize = 24.dp,
-                containerColor = if (isAppDarkTheme()) Color(0xFF363636).copy(0.4f)
-                else Color(0xFFFFFFFF).copy(0.6f),
-                backdropAlpha = material.backdropAlpha,
-                shadowAlpha = material.shadowAlpha,
-            )
-        }
+        // 单人只读版：不再提供「添加课程」入口，去掉右上角添加按钮。
+        val detailEndAction: @Composable () -> Unit = { }
         val detailContent: @Composable () -> Unit = {
             val scope = rememberCoroutineScope()
             val coursesToShow = remember(selectedCourses, selectedCourse, viewingWeek) {
@@ -1562,30 +1528,7 @@ fun MainScheduleScreen(
                                     textAlign = TextAlign.Center
                                 )
                             }
-                            Spacer(modifier = Modifier.height(14.dp))
-                            Box(
-                                modifier = Modifier
-                                    .clip(ContinuousRoundedRectangle(20.dp))
-                                    .background(MiuixTheme.colorScheme.primary.copy(alpha = 0.1f))
-                                    .clickable {
-                                        showCourseDetail = false
-                                        onPopupStateChange(false)
-                                        // 等关闭动画后再开编辑弹窗
-                                        scope.launch {
-                                            delay(100.milliseconds)
-                                            viewModel.showEditDialog(course)
-                                        }
-                                    }
-                                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "编辑",
-                                    style = MiuixTheme.textStyles.body1.copy(fontSize = 16.sp),
-                                    fontWeight = FontWeight.Medium,
-                                    color = MiuixTheme.colorScheme.primary
-                                )
-                            }
+
                         }
                     }
                     } // Column (isHidden)
