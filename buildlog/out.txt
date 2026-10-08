@@ -1,12 +1,12 @@
-commit: be9606c
+commit: d2179b8
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 total 3.2M
--rw-r--r-- 1 runner runner 3.2M Oct  8 04:10 app-release.apk
-drwxr-xr-x 4 runner runner 4.0K Oct  8 04:10 baselineProfiles
--rw-r--r-- 1 runner runner  714 Oct  8 04:10 output-metadata.json
+-rw-r--r-- 1 runner runner 3.2M Oct  8 04:33 app-release.apk
+drwxr-xr-x 4 runner runner 4.0K Oct  8 04:33 baselineProfiles
+-rw-r--r-- 1 runner runner  714 Oct  8 04:33 output-metadata.json
 --- 编译错误 ---
-BUILD SUCCESSFUL in 5m 12s
+BUILD SUCCESSFUL in 6m 32s
 --- build.log 尾部 ---
 w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:35 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
 w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:79 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
@@ -35,7 +35,7 @@ w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/ky
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
-BUILD SUCCESSFUL in 5m 12s
+BUILD SUCCESSFUL in 6m 32s
 54 actionable tasks: 54 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
