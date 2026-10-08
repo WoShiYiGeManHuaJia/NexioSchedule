@@ -102,6 +102,7 @@ object BuiltinCourseSync {
                 val room: String,
                 val start: String,
                 val end: String,
+                val online: Boolean = false,
             )
             data class Group(
                 val wks: MutableSet<Int> = java.util.TreeSet(),
@@ -134,12 +135,20 @@ object BuiltinCourseSync {
                     val name = o.optString("name", "")
                     val teacher = o.optString("teacher", "")
                     val room = o.optString("room", "")
+                    // 教务系统将来给周六补课加"线上上课"标识时，这里直接读到
+                    val online = o.optBoolean("online", false)
                     val key = o.optInt("day", 1).toString() + "|" +
                         secs.joinToString(",") + "|" + name + "|" + teacher + "|" + room
                     val g = groups.getOrPut(key) { Group() }
                     g.wks.add(w)
-                    if (g.row == null) {
-                        g.row = Row(o.optInt("day", 1), secs, name, teacher, room, st, et)
+                    val row = Row(
+                        o.optInt("day", 1), secs, name, teacher,
+                        // 线上课把教室标成「线上」，保留原教室便于对照
+                        if (online && room.isNotBlank()) "线上 · $room" else if (online) "线上" else room,
+                        st, et, online,
+                    )
+                    if (g.row == null || online) {
+                        g.row = row
                     }
                 }
             }
