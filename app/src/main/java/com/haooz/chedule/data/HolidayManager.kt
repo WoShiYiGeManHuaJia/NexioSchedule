@@ -64,10 +64,65 @@ object HolidayManager {
         }
     }
 
+    /**
+     * 内置默认节假日/调休。
+     *
+     * 这些是 2026-2027-1 学期教务已公布的固定安排，重装 App 后无需手工重填：
+     * 只要该年份从未存过任何条目（全新安装 / 清数据），就直接返回这份默认。
+     * 用户一旦在设置里改过并保存，就会落进 SharedPreferences，之后一律以用户的为准。
+     */
+    private val DEFAULT_ENTRIES: Map<Int, List<Entry>> = mapOf(
+        2026 to listOf(
+            Entry(
+                date = "2026-09-25",
+                endDate = "2026-10-07",
+                name = "节假日",
+                type = TYPE_HOLIDAY,
+            ),
+            Entry(
+                date = "2026-09-20",
+                name = "调休（补9月28日的课）",
+                type = TYPE_WORKSWAP,
+                followWeek = 4,
+                followWeekday = 1,
+            ),
+            Entry(
+                date = "2026-10-10",
+                name = "调休（补9月29日的课）",
+                type = TYPE_WORKSWAP,
+                followWeek = 4,
+                followWeekday = 2,
+            ),
+            Entry(
+                date = "2026-10-17",
+                name = "调休（补9月30日的课）",
+                type = TYPE_WORKSWAP,
+                followWeek = 4,
+                followWeekday = 3,
+            ),
+            Entry(
+                date = "2026-10-24",
+                name = "调休（补10月6日的课）",
+                type = TYPE_WORKSWAP,
+                followWeek = 5,
+                followWeekday = 2,
+            ),
+            Entry(
+                date = "2026-10-31",
+                name = "调休（补10月7日的课）",
+                type = TYPE_WORKSWAP,
+                followWeek = 5,
+                followWeekday = 3,
+            ),
+        ),
+    )
+
     @Synchronized
     fun load(context: Context, year: Int): List<Entry> {
         val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString("$KEY_PREFIX$year", null) ?: return emptyList()
+            .getString("$KEY_PREFIX$year", null)
+            // 从未存过该年份的条目 -> 用内置默认，免重装后手工重填
+            ?: return DEFAULT_ENTRIES[year] ?: emptyList()
         val array = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
         return readEntriesSafely(array.length()) { index ->
             parseStoredEntry(array.getJSONObject(index)) ?: error("Invalid holiday entry")
