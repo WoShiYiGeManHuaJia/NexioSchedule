@@ -485,7 +485,7 @@ private fun RefreshTopBarButton(
                         androidx.compose.material3.Text(
                             text = "关闭",
                             fontSize = 14.sp,
-                            color = MiuixTheme.colorScheme.onSurfaceVariant,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                             modifier = Modifier
                                 .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
                                 .clickable { showStatusDialog = false }
