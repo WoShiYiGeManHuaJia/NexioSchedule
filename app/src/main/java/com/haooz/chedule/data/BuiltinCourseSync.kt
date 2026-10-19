@@ -27,6 +27,19 @@ object BuiltinCourseSync {
         0xFFE91E63L, 0xFF00BCD4L, 0xFF3F51B5L, 0xFFAB47BCL, 0xFF009688L, 0xFF673AB7L
     )
 
+    /**
+     * 失败时给出完整报告：人话提示 + 原始异常 + 分步自检。
+     *
+     * 只报一句「连不上教务服务器」是没法修的——同样是连不上，
+     * 「端口被运营商拦」「账号被拒」「接口返回异常」三种情况改法完全不同。
+     */
+    private fun failReport(context: Context, e: Exception): String {
+        val head = DirectKebiaoFetcher.hintOf(e)
+        val diag = runCatching { DirectKebiaoFetcher.diagnose(context) }
+            .getOrElse { "自检本身失败：${it.message?.take(100)}" }
+        return "$head\n\n$diag"
+    }
+
     suspend fun sync(context: Context): SyncResult = withContext(Dispatchers.IO) {
         try {
             // 首选手机直连教务（国内公网可达，无需校园网），拿到的是最新数据。
@@ -43,10 +56,10 @@ object BuiltinCourseSync {
                 //  - 本地为空（全新安装 / 清过数据）：回落 GitHub，先让课表有内容可用。
                 val repoNow = CourseRepository.getInstance(context.applicationContext)
                 if (repoNow.getAllCourses().isNotEmpty()) {
-                    return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
+                    return@withContext SyncResult(false, failReport(context, e))
                 }
                 val gh = fetchFromGithub()
-                    ?: return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
+                    ?: return@withContext SyncResult(false, failReport(context, e))
                 gh to "GitHub 兜底"
             }
             val textSure = pair.first
