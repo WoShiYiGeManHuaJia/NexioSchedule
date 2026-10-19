@@ -1,0 +1,63 @@
+name: verify-apk
+on:
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 下载 release APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p out
+          gh release download builtin-latest --repo ${{ github.repository }} \
+            --pattern 'app-release.apk' --dir out --clobber
+          ls -lh out/
+
+      - name: 解包并检查内置内容
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          mkdir -p vlog
+          APK=out/app-release.apk
+          {
+            echo "=== APK 基本信息 ==="
+            ls -lh "$APK"
+            echo "md5: $(md5sum "$APK" | cut -d' ' -f1)"
+            echo
+            echo "=== assets 列表 ==="
+            unzip -l "$APK" | grep 'assets/' || echo "(无 assets)"
+            echo
+            echo "=== builtin_courses.json 内容 ==="
+            mkdir -p ext && cd ext && unzip -o -q "../$APK" assets/builtin_courses.json && \
+              cat assets/builtin_courses.json | head -c 1500
+            echo
+            echo "=== 检查 dex 中是否含内置节假日日期串 2026-09-25 ==="
+            cd /home/runner/work
+          } > vlog/out.txt 2>&1
+          # dex 字符串检查
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p dex && cd dex && unzip -o -q "../$APK" 'classes*.dex' || true
+          ls -lh
+          for f in classes*.dex; do
+              [ -e "$f" ] || continue
+              echo "--- $f ---" >> "$GITHUB_WORKSPACE/vlog/out.txt"
+              for pat in "2026-09-25" "2026-10-07" "builtin_courses" "连不上教务服务器" "无需校园网"; do
+                  if strings "$f" 2>/dev/null | grep -qF "$pat"; then
+                      echo "  ✓ 命中: $pat" >> "$GITHUB_WORKSPACE/vlog/out.txt"
+                  else
+                      echo "  ✗ 未命中: $pat" >> "$GITHUB_WORKSPACE/vlog/out.txt"
+                  fi
+              done
+          done
+          cat "$GITHUB_WORKSPACE/vlog/out.txt"
+
+      - name: 提交验证结果
+        run: |
+          git config user.name bot; git config user.email b@e.com
+          git add vlog/ || true
+          git diff --cached --quiet || git commit -m "verify: 解包校验 APK 内置内容"
+          for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
