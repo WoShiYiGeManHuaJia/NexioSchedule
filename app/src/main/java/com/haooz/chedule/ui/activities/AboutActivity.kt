@@ -464,6 +464,23 @@ fun AboutScreen(
                             ) {
                                 if (!embedded) {
                                     ArrowPreference(
+                                        title = "课表直连 · 诊断",
+                                        endActions = {
+                                            Text(
+                                                text = "刷新/排错",
+                                                fontSize = 14.sp,
+                                                color = MiuixTheme.colorScheme.onSurfaceVariantActions
+                                            )
+                                        },
+                                        onClick = {
+                                            val intent =
+                                                Intent(context, KebiaoDiagActivity::class.java)
+                                            context.startActivity(intent)
+                                        }
+                                    )
+                                }
+                                if (!embedded) {
+                                    ArrowPreference(
                                         title = "交流与反馈",
                                         onClick = {
                                             val intent =
