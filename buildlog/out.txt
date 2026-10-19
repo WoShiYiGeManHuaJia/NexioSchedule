@@ -1,4 +1,4 @@
-commit: ae58a80
+commit: fd62a25
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
@@ -6,19 +6,19 @@ gradle_exit: gradle_exit=0
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:47:17 'val' cannot be reassigned.
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:49:17 'val' cannot be reassigned.
 FAILURE: Build failed with an exception.
-BUILD FAILED in 2m 7s
+BUILD FAILED in 2m 35s
 --- build.log 尾部 ---
-> Task :app:processReleaseResources
-
-> Task :app:downloadEduIndex
 [EduIndex] 已拉取最新索引 -> /home/runner/work/NexioSchedule/NexioSchedule/app/src/main/assets/eduloader/school_index.pb
 
+> Task :app:mergeReleaseResources
 > Task :app:mergeReleaseAssets
 > Task :app:compressReleaseAssets
-
-> Task :app:compileReleaseKotlin FAILED
+> Task :app:processReleaseResources
+> Task :app:compileReleaseKotlin
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:47:17 'val' cannot be reassigned.
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:49:17 'val' cannot be reassigned.
+
+> Task :app:compileReleaseKotlin FAILED
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
@@ -35,7 +35,7 @@ Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 7s
+BUILD FAILED in 2m 35s
 36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
@@ -56,6 +56,6 @@ Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.a
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 7s
+BUILD FAILED in 1m 34s
 32 actionable tasks: 24 executed, 8 from cache
 Configuration cache entry stored.
