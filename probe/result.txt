@@ -1,0 +1,6 @@
+=== 1. TCP ===
+  失败 TimeoutError('timed out')
+
+=== 2. 登录 ===
+  URL: http://222.243.161.213:81/hnrjzyxyhd/login?userNo=202405190231&pwd=QlRZY0NDcTBDRG5uQnZ4TDROSWFzZz09&encode=1&c
+  失败 URLError(TimeoutError('timed out'))
