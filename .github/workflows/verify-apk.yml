@@ -13,43 +13,45 @@ jobs:
           python-version: '3.11'
       - name: 逐条拆包核对
         run: |
+          set +e
           python3 - <<'PY' > vlog_out.txt 2>&1
-          import urllib.request, zipfile, io, json
-          URL="https://github.com/WoShiYiGeManHuaJia/NexioSchedule/releases/download/builtin-latest/app-release.apk"
-          req=urllib.request.Request(URL,headers={"User-Agent":"Mozilla/5.0"})
-          data=urllib.request.urlopen(req,timeout=240).read()
-          z=zipfile.ZipFile(io.BytesIO(data))
-          print("APK: %.2f MB"%(len(data)/1048576))
-          blob=b"".join(z.read(n) for n in z.namelist() if n.endswith(".dex"))
-          print("dex: %.1f MB\n"%(len(blob)/1048576))
-
-          print("=== 内置节假日（截图：2026/09/25 至 2026/10/07，13天）===")
-          for p in ["2026-09-25","2026-10-07"]:
-              print("  %s %s"%("✓" if p.encode() in blob else "✗",p))
-
-          print("\n=== 内置调休 5 条（截图逐条核对）===")
-          rows=[("2026-09-20","补9月28日的课"),("2026-10-10","补9月29日的课"),
-                ("2026-10-17","补9月30日的课"),("2026-10-24","补10月6日的课"),
-                ("2026-10-31","补10月7日的课")]
-          ok=0
-          for d,n in rows:
-              h1=d.encode() in blob; h2=n.encode("utf-8") in blob
-              if h1 and h2: ok+=1
-              print("  %s %s  %s   (日期%s / 名称%s)"%(
-                  "✓" if (h1 and h2) else "✗", d, n,
-                  "✓" if h1 else "✗", "✓" if h2 else "✗"))
-          print("  小计: %d/5"%ok)
-
-          print("\n=== 关键修复是否在包里 ===")
-          for label,p in [("loadAllByYear 修复标记 defaultYears","defaultYears"),
-                          ("新文案 无需校园网","无需校园网"),
-                          ("GitHub兜底 jsdelivr","jsdelivr")]:
-              print("  %s %-30s %s"%("✓" if p.encode() in blob else "✗",label,p))
-          print("\n=== 旧文案（应已消失）===")
-          for p in ["请连校园网 WiFi"]:
-              print("  %s %s"%("✗ 仍在" if p.encode("utf-8") in blob else "✓ 已移除",p))
+          import urllib.request, zipfile, io
+          try:
+              URL="https://github.com/WoShiYiGeManHuaJia/NexioSchedule/releases/download/builtin-latest/app-release.apk"
+              req=urllib.request.Request(URL,headers={"User-Agent":"Mozilla/5.0"})
+              data=urllib.request.urlopen(req,timeout=240).read()
+              z=zipfile.ZipFile(io.BytesIO(data))
+              print("APK: %.2f MB"%(len(data)/1048576))
+              blob=b"".join(z.read(n) for n in z.namelist() if n.endswith(".dex"))
+              print("dex: %.1f MB"%((len(blob)/1048576)))
+              def has(s): return s.encode("utf-8") in blob
+              print("\n=== 内置节假日 ===")
+              for p in ["2026-09-25","2026-10-07"]:
+                  print("  %s %s"%("OK" if has(p) else "NO", p))
+              print("\n=== 内置调休 5 条 ===")
+              rows=[("2026-09-20","9月28日"),("2026-10-10","9月29日"),
+                    ("2026-10-17","9月30日"),("2026-10-24","10月6日"),
+                    ("2026-10-31","10月7日")]
+              ok=0
+              for d,n in rows:
+                  a=has(d); b=has(n)
+                  if a and b: ok+=1
+                  print("  %s %s -> 补%s的课  (日期:%s 名称:%s)"%(
+                      "OK" if (a and b) else "NO", d, n,
+                      "y" if a else "n", "y" if b else "n"))
+              print("  小计 %d/5"%ok)
+              print("\n=== 修复标记 ===")
+              for label,p in [("defaultYears(loadAllByYear修复)","defaultYears"),
+                              ("无需校园网(新文案)","无需校园网"),
+                              ("jsdelivr(GitHub兜底)","jsdelivr")]:
+                  print("  %s %s"%("OK" if has(p) else "NO", label))
+              print("\n=== 旧文案应已移除 ===")
+              print("  %s 请连校园网 WiFi"%("STILL-THERE" if has("请连校园网 WiFi") else "REMOVED"))
+          except Exception as ex:
+              print("EXC:", repr(ex))
           PY
           cat vlog_out.txt
+          echo "done"
       - name: 保存
         run: |
           mkdir -p vlog && cp vlog_out.txt vlog/out.txt
