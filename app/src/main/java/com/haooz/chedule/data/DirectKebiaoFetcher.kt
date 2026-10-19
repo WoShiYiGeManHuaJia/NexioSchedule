@@ -24,7 +24,7 @@ object DirectKebiaoFetcher {
      * 目的很直接——让用户点刷新时能从弹窗里立刻看出装的是不是新包，
      * 不用靠文件大小、更新时间这些容易被缓存骗过去的间接线索。
      */
-    const val BUILD_TAG = "20261020-2"
+    const val BUILD_TAG = "20261020-3"
 
     private const val BASE = "http://222.243.161.213:81/hnrjzyxyhd"
 
@@ -90,7 +90,12 @@ object DirectKebiaoFetcher {
         return try {
             if (method == "POST") {
                 conn.doOutput = true
-                conn.outputStream.use { it.write(ByteArray(0)) }
+                // 必须显式声明 body 长度为 0。否则 HttpURLConnection 走 chunked 分块编码，
+                // 服务端（这类教务多为自写 HTTP 服务）等不到结束块就会一直挂住直到超时——
+                // 表现为「TCP 握手通、HTTP 请求永不返回」。
+                runCatching { conn.setFixedLengthStreamingMode(0) }
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                conn.outputStream.use { /* 无 body */ }
             }
             val code = conn.responseCode
             val stream = (if (code in 200..299) conn.inputStream else conn.errorStream)
@@ -109,12 +114,31 @@ object DirectKebiaoFetcher {
      * 抓全部周次，返回与 weeks_cache.json 结构一致的 JSON 文本，
      * 交给 BuiltinCourseSync 复用既有解析（含线上标识识别）。
      */
+    /**
+     * 登录：GET 优先，失败再 POST。
+     *
+     * 实测现象是「TCP 握手 48ms 通、POST 登录必然超时」，这是空 body 走 chunked 编码
+     * 把服务端挂住的典型表现。GET 完全没有请求体，天然绕开这个问题，所以放在第一位。
+     * 仍保留 POST 回退：少数部署只在 POST 上挂了处理逻辑。
+     */
+    private fun rawLogin(c: Credential): String {
+        val q = "userNo=${enc(c.userNo)}&pwd=${enc(c.pwdEnc)}" +
+            "&encode=1&captchaData=&codeVal="
+        val url = "$BASE/login?$q"
+        var last: Exception? = null
+        try {
+            return http(url, emptyMap(), "GET", 12_000)
+        } catch (e: Exception) { last = e }
+        try {
+            return http(url, emptyMap(), "POST", 12_000)
+        } catch (e: Exception) { last = e }
+        throw last ?: RuntimeException("登录失败：未知原因")
+    }
+
     fun fetchAsWeeksCacheJson(context: Context): String {
         precheck()
         val c = loadCredential(context)
-        val q = "userNo=${enc(c.userNo)}&pwd=${enc(c.pwdEnc)}" +
-            "&encode=1&captchaData=&codeVal="
-        val loginRaw = http("$BASE/login?$q", emptyMap(), "POST", 15_000)
+        val loginRaw = rawLogin(c)
         val lj = runCatching { JSONObject(loginRaw) }
             .getOrNull() ?: throw RuntimeException("登录返回不是 JSON：${loginRaw.take(120)}")
         if (lj.optString("code") != "1") {
@@ -247,29 +271,42 @@ object DirectKebiaoFetcher {
             return sb.toString().trimEnd()
         }
 
-        // 3. 登录接口
+        // 3. 登录接口：GET 与 POST 各测一次并计时。
+        // 两者结果不一致时（GET 秒回、POST 超时）可直接定位为请求体编码问题，
+        // 而不是「网络不通」——这两者的修法完全不同。
         val c = loadCredential(context)
         val q = "userNo=${enc(c.userNo)}&pwd=${enc(c.pwdEnc)}" +
             "&encode=1&captchaData=&codeVal="
-        val loginRaw: String
+        val url = "$BASE/login?$q"
+        var loginRaw: String? = null
         try {
             val t1 = System.currentTimeMillis()
-            loginRaw = http("$BASE/login?$q", emptyMap(), "POST", 12_000)
-            line("3. 登录接口: HTTP 200 (${System.currentTimeMillis() - t1}ms)")
+            loginRaw = http(url, emptyMap(), "GET", 10_000)
+            line("3a. 登录 GET : HTTP 200 (${System.currentTimeMillis() - t1}ms)")
         } catch (e: Exception) {
-            line("3. 登录接口: 失败 ${e.javaClass.simpleName}: ${e.message?.take(150)}")
-            return sb.toString().trimEnd()
+            line("3a. 登录 GET : 失败 ${e.javaClass.simpleName}: ${e.message?.take(120)}")
         }
+        if (loginRaw == null) {
+            try {
+                val t1 = System.currentTimeMillis()
+                loginRaw = http(url, emptyMap(), "POST", 10_000)
+                line("3b. 登录 POST: HTTP 200 (${System.currentTimeMillis() - t1}ms)")
+            } catch (e: Exception) {
+                line("3b. 登录 POST: 失败 ${e.javaClass.simpleName}: ${e.message?.take(120)}")
+                return sb.toString().trimEnd()
+            }
+        }
+        val loginBody = loginRaw ?: return sb.toString().trimEnd()
 
         // 4. 登录结果
-        val lj = runCatching { JSONObject(loginRaw) }.getOrNull()
+        val lj = runCatching { JSONObject(loginBody) }.getOrNull()
         if (lj == null) {
-            line("4. 登录返回: 非 JSON —— ${loginRaw.take(120)}")
+            line("4. 登录返回: 非 JSON —— ${loginBody.take(120)}")
             return sb.toString().trimEnd()
         }
         val code = lj.optString("code")
         if (code != "1") {
-            line("4. 登录被拒: code=$code ${loginRaw.take(160)}")
+            line("4. 登录被拒: code=$code ${loginBody.take(160)}")
             return sb.toString().trimEnd()
         }
         val token = lj.optJSONObject("data")?.optString("token").orEmpty()
