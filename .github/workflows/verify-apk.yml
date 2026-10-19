@@ -7,65 +7,62 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: 解包校验
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set +e
-          mkdir -p vlog out
-          {
-            echo "=== 1. 下载 release APK ==="
-            gh release download builtin-latest --repo ${{ github.repository }} \
-              --pattern 'app-release.apk' --dir out --clobber 2>&1 | tail -3
-            ls -lh out/
-            echo "md5: $(md5sum out/app-release.apk 2>/dev/null | cut -d' ' -f1)"
-          } > vlog/out.txt 2>&1
+      - uses: actions/checkout@v4
 
-          python3 - <<'PY' >> vlog/out.txt 2>&1
-          import zipfile, os, json, glob
-          apk = "out/app-release.apk"
-          print("\n=== 2. assets 列表 ===")
-          z = zipfile.ZipFile(apk)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 解包校验
+        run: |
+          python3 - <<'PY' > vlog_out.txt 2>&1
+          import urllib.request, zipfile, io, json
+          URL = "https://github.com/WoShiYiGeManHuaJia/NexioSchedule/releases/download/builtin-latest/app-release.apk"
+          print("下载:", URL)
+          req = urllib.request.Request(URL, headers={"User-Agent": "Mozilla/5.0"})
+          data = urllib.request.urlopen(req, timeout=240).read()
+          print("大小: %.2f MB" % (len(data)/1048576))
+          z = zipfile.ZipFile(io.BytesIO(data))
+          print("\n=== assets ===")
           for n in z.namelist():
               if n.startswith("assets/"):
-                  print("  %-40s %d 字节" % (n, z.getinfo(n).file_size))
-          print("\n=== 3. builtin_courses.json ===")
+                  print("  %-42s %d 字节" % (n, z.getinfo(n).file_size))
+          print("\n=== builtin_courses.json ===")
           try:
               j = json.loads(z.read("assets/builtin_courses.json").decode("utf-8"))
               print("  课程数:", len(j["courses"]))
-              print("  meta:", j.get("meta"))
+              print("  meta:", json.dumps(j.get("meta"), ensure_ascii=False))
               D = ["", "周一","周二","周三","周四","周五","周六","周日"]
               for x in j["courses"][:5]:
                   print("   ", x["name"], D[x["dayOfWeek"]],
-                        "%d-%d节"%(x["startSection"],x["endSection"]),
-                        "第%d-%d周"%(x["startWeek"],x["endWeek"]), x["classroom"])
+                        "%d-%d节" % (x["startSection"], x["endSection"]),
+                        "第%d-%d周" % (x["startWeek"], x["endWeek"]), x["classroom"])
           except Exception as e:
               print("  读取失败:", e)
-          print("\n=== 4. dex 字符串扫描（验证代码改动是否进包）===")
+          print("\n=== dex 字符串扫描 ===")
           names = [n for n in z.namelist() if n.endswith(".dex")]
-          print("  dex 文件:", names)
+          print("  dex:", names)
+          blob = b"".join(z.read(n) for n in names)
+          print("  总大小: %.1f MB" % (len(blob)/1048576))
           pats = [
-              ("内置节假日日期 2026-09-25", "2026-09-25"),
-              ("内置节假日结束 2026-10-07", "2026-10-07"),
+              ("内置节假日 2026-09-25", "2026-09-25"),
+              ("内置节假日 2026-10-07", "2026-10-07"),
               ("内置调休 9月28日", "9月28日"),
-              ("内置课表资源 builtin_courses", "builtin_courses"),
-              ("新文案：无需校园网", "无需校园网"),
-              ("旧文案：请连校园网 WiFi", "请连校园网 WiFi"),
-              ("GitHub 兜底源 jsdelivr", "jsdelivr"),
+              ("内置课表 builtin_courses", "builtin_courses"),
+              ("新文案 无需校园网", "无需校园网"),
+              ("旧文案 请连校园网 WiFi", "请连校园网 WiFi"),
+              ("GitHub兜底 jsdelivr", "jsdelivr"),
           ]
-          blob = b""
-          for n in names:
-              blob += z.read(n)
-          print("  dex 总大小: %.1f MB" % (len(blob)/1048576))
           for label, pat in pats:
               hit = pat.encode("utf-8") in blob
-              print("   %s  %-28s %s" % ("✓" if hit else "✗", label, pat))
+              print("   %s %-26s %s" % ("✓" if hit else "✗", label, pat))
           PY
-          cat vlog/out.txt
+          cat vlog_out.txt
 
-      - name: 提交结果
+      - name: 保存结果
         run: |
+          mkdir -p vlog && cp vlog_out.txt vlog/out.txt
           git config user.name bot; git config user.email b@e.com
-          git add vlog/ 2>/dev/null || true
+          git add vlog/ || true
           git diff --cached --quiet || git commit -m "verify: APK 解包校验结果"
           for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
