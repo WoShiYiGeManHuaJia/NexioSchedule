@@ -7,57 +7,65 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: 下载 release APK
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p out
-          gh release download builtin-latest --repo ${{ github.repository }} \
-            --pattern 'app-release.apk' --dir out --clobber
-          ls -lh out/
-
-      - name: 解包并检查内置内容
+      - name: 解包校验
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
-          mkdir -p vlog
-          APK=out/app-release.apk
+          mkdir -p vlog out
           {
-            echo "=== APK 基本信息 ==="
-            ls -lh "$APK"
-            echo "md5: $(md5sum "$APK" | cut -d' ' -f1)"
-            echo
-            echo "=== assets 列表 ==="
-            unzip -l "$APK" | grep 'assets/' || echo "(无 assets)"
-            echo
-            echo "=== builtin_courses.json 内容 ==="
-            mkdir -p ext && cd ext && unzip -o -q "../$APK" assets/builtin_courses.json && \
-              cat assets/builtin_courses.json | head -c 1500
-            echo
-            echo "=== 检查 dex 中是否含内置节假日日期串 2026-09-25 ==="
-            cd /home/runner/work
+            echo "=== 1. 下载 release APK ==="
+            gh release download builtin-latest --repo ${{ github.repository }} \
+              --pattern 'app-release.apk' --dir out --clobber 2>&1 | tail -3
+            ls -lh out/
+            echo "md5: $(md5sum out/app-release.apk 2>/dev/null | cut -d' ' -f1)"
           } > vlog/out.txt 2>&1
-          # dex 字符串检查
-          cd "$GITHUB_WORKSPACE"
-          mkdir -p dex && cd dex && unzip -o -q "../$APK" 'classes*.dex' || true
-          ls -lh
-          for f in classes*.dex; do
-              [ -e "$f" ] || continue
-              echo "--- $f ---" >> "$GITHUB_WORKSPACE/vlog/out.txt"
-              for pat in "2026-09-25" "2026-10-07" "builtin_courses" "连不上教务服务器" "无需校园网"; do
-                  if strings "$f" 2>/dev/null | grep -qF "$pat"; then
-                      echo "  ✓ 命中: $pat" >> "$GITHUB_WORKSPACE/vlog/out.txt"
-                  else
-                      echo "  ✗ 未命中: $pat" >> "$GITHUB_WORKSPACE/vlog/out.txt"
-                  fi
-              done
-          done
-          cat "$GITHUB_WORKSPACE/vlog/out.txt"
 
-      - name: 提交验证结果
+          python3 - <<'PY' >> vlog/out.txt 2>&1
+          import zipfile, os, json, glob
+          apk = "out/app-release.apk"
+          print("\n=== 2. assets 列表 ===")
+          z = zipfile.ZipFile(apk)
+          for n in z.namelist():
+              if n.startswith("assets/"):
+                  print("  %-40s %d 字节" % (n, z.getinfo(n).file_size))
+          print("\n=== 3. builtin_courses.json ===")
+          try:
+              j = json.loads(z.read("assets/builtin_courses.json").decode("utf-8"))
+              print("  课程数:", len(j["courses"]))
+              print("  meta:", j.get("meta"))
+              D = ["", "周一","周二","周三","周四","周五","周六","周日"]
+              for x in j["courses"][:5]:
+                  print("   ", x["name"], D[x["dayOfWeek"]],
+                        "%d-%d节"%(x["startSection"],x["endSection"]),
+                        "第%d-%d周"%(x["startWeek"],x["endWeek"]), x["classroom"])
+          except Exception as e:
+              print("  读取失败:", e)
+          print("\n=== 4. dex 字符串扫描（验证代码改动是否进包）===")
+          names = [n for n in z.namelist() if n.endswith(".dex")]
+          print("  dex 文件:", names)
+          pats = [
+              ("内置节假日日期 2026-09-25", "2026-09-25"),
+              ("内置节假日结束 2026-10-07", "2026-10-07"),
+              ("内置调休 9月28日", "9月28日"),
+              ("内置课表资源 builtin_courses", "builtin_courses"),
+              ("新文案：无需校园网", "无需校园网"),
+              ("旧文案：请连校园网 WiFi", "请连校园网 WiFi"),
+              ("GitHub 兜底源 jsdelivr", "jsdelivr"),
+          ]
+          blob = b""
+          for n in names:
+              blob += z.read(n)
+          print("  dex 总大小: %.1f MB" % (len(blob)/1048576))
+          for label, pat in pats:
+              hit = pat.encode("utf-8") in blob
+              print("   %s  %-28s %s" % ("✓" if hit else "✗", label, pat))
+          PY
+          cat vlog/out.txt
+
+      - name: 提交结果
         run: |
           git config user.name bot; git config user.email b@e.com
-          git add vlog/ || true
-          git diff --cached --quiet || git commit -m "verify: 解包校验 APK 内置内容"
+          git add vlog/ 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "verify: APK 解包校验结果"
           for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
