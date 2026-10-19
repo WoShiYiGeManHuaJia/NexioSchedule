@@ -144,8 +144,17 @@ object HolidayManager {
     fun loadAllByYear(context: Context): Map<Int, List<Entry>> {
         val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val years = storedEntryYears(preferences.all.keys)
-        return years.associateWith { load(context, it) }
+        // 关键：必须把内置默认年份也并进来。
+        // 之前这里只枚举「已存过的年份」，全新安装时 SharedPreferences 是空的，
+        // years 为空 -> 返回空 map -> 设置页一片空白，内置节假日/调休根本读不到。
+        // load() 里那份默认值只有在这里被枚举到才有机会生效。
+        val allYears = years + DEFAULT_ENTRIES.keys
+        return allYears.associateWith { load(context, it) }
     }
+
+    /** 内置默认覆盖到哪些年份（给设置页/校验用）。 */
+    @Synchronized
+    fun defaultYears(): Set<Int> = DEFAULT_ENTRIES.keys
 
     /** Preserve each year's stored JSON, including custom mappings and cross-year ranges. */
     @Synchronized
