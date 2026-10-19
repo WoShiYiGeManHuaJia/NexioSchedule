@@ -59,6 +59,10 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 
 private val DAY_NAMES = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 private val MM_DD_FORMATTER = DateTimeFormatter.ofPattern("MM/dd")
@@ -418,25 +422,76 @@ private fun RefreshTopBarButton(
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.82f)
+                    .fillMaxWidth(0.88f)
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
                     .background(MiuixTheme.colorScheme.surface)
                     .padding(horizontal = 22.dp, vertical = 24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (!statusDone) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.5.dp,
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.5.dp,
+                            )
+                            Spacer(modifier = Modifier.width(14.dp))
+                            androidx.compose.material3.Text(
+                                text = statusText,
+                                fontSize = 15.sp,
+                                color = MiuixTheme.colorScheme.onSurface,
+                            )
+                        }
+                    } else {
+                        // 失败信息含分步自检，可能很长：限高 + 可滚动 + 可选中复制，
+                        // 否则一屏装不下，后面的关键步骤直接被截断看不到。
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 340.dp)
+                                .verticalScroll(
+                                    androidx.compose.foundation.rememberScrollState()
+                                )
+                        ) {
+                            androidx.compose.foundation.text.selection.SelectionContainer {
+                                androidx.compose.material3.Text(
+                                    text = statusText,
+                                    fontSize = 13.sp,
+                                    lineHeight = 19.sp,
+                                    color = MiuixTheme.colorScheme.onSurface,
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        androidx.compose.material3.Text(
+                            text = "复制诊断信息",
+                            fontSize = 14.sp,
+                            color = MiuixTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                                .clickable {
+                                    val cm = context.getSystemService(
+                                        android.content.Context.CLIPBOARD_SERVICE
+                                    ) as android.content.ClipboardManager
+                                    cm.setPrimaryClip(
+                                        android.content.ClipData.newPlainText(
+                                            "kebiao-diag", statusText
+                                        )
+                                    )
+                                }
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
                         )
-                        Spacer(modifier = Modifier.width(14.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        androidx.compose.material3.Text(
+                            text = "关闭",
+                            fontSize = 14.sp,
+                            color = MiuixTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                                .clickable { showStatusDialog = false }
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                        )
                     }
-                    androidx.compose.material3.Text(
-                        text = statusText,
-                        fontSize = 15.sp,
-                        color = MiuixTheme.colorScheme.onSurface,
-                    )
                 }
             }
         }
