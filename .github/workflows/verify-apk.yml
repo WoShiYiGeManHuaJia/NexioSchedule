@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: 逐条拆包核对
+      - name: 拆包核对
         run: |
           set +e
           python3 - <<'PY' > vlog_out.txt 2>&1
@@ -36,26 +36,30 @@ jobs:
               for d,n in rows:
                   a=has(d); b=has(n)
                   if a and b: ok+=1
-                  print("  %s %s -> 补%s的课  (日期:%s 名称:%s)"%(
-                      "OK" if (a and b) else "NO", d, n,
-                      "y" if a else "n", "y" if b else "n"))
+                  print("  %s %s -> 补%s的课"%("OK" if (a and b) else "NO", d, n))
               print("  小计 %d/5"%ok)
-              print("\n=== 修复标记 ===")
-              for label,p in [("defaultYears(loadAllByYear修复)","defaultYears"),
-                              ("无需校园网(新文案)","无需校园网"),
-                              ("jsdelivr(GitHub兜底)","jsdelivr")]:
-                  print("  %s %s"%("OK" if has(p) else "NO", label))
+              print("\n=== 诊断与修复标记 ===")
+              for label,p in [("构建号 20261020-1","20261020-1"),
+                              ("分步自检标题","网络自检"),
+                              ("TCP步骤","TCP 222.243.161.213:81"),
+                              ("登录接口步骤","登录接口"),
+                              ("课表接口步骤","课表接口"),
+                              ("复制诊断信息","复制诊断信息"),
+                              ("原始错误","原始错误"),
+                              ("无需校园网","无需校园网"),
+                              ("jsdelivr兜底","jsdelivr")]:
+                  print("  %s %-18s %s"%("OK" if has(p) else "NO",label,p))
               print("\n=== 旧文案应已移除 ===")
-              print("  %s 请连校园网 WiFi"%("STILL-THERE" if has("请连校园网 WiFi") else "REMOVED"))
+              print("  %s 请连校园网 WiFi"%("STILL" if has("请连校园网 WiFi") else "REMOVED"))
           except Exception as ex:
               print("EXC:", repr(ex))
           PY
           cat vlog_out.txt
-          echo "done"
+          echo done
       - name: 保存
         run: |
           mkdir -p vlog && cp vlog_out.txt vlog/out.txt
           git config user.name bot; git config user.email b@e.com
           git add vlog/ || true
-          git diff --cached --quiet || git commit -m "verify: 逐条核对内置节假日与调休"
+          git diff --cached --quiet || git commit -m "verify"
           for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
