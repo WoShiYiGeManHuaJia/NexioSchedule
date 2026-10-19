@@ -8,13 +8,6 @@ on:
 permissions:
   contents: write
 
-# 同一时间只允许一个构建，后来的排队等（不取消、不并发）。
-# 之前并发构建会互相覆盖 release 上同名的 APK，
-# 最后跑完的可能是代码最旧的那一台，导致新代码出不了包。
-concurrency:
-  group: build-apk
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -140,11 +133,24 @@ jobs:
         run: |
           set +e
           ls -lh out/
-          for f in out/*.apk; do
+          # 只保留一个带日期的文件名。
+          # 之前 release 上同时挂着 app-release / app-debug 两个（其中一个是 10-05 的旧包），
+          # 用户很容易下错，装完发现还是老样子。现在删掉旧命名，只留这一个。
+          TAG="builtin-latest"
+          NAME="NexioSchedule-$(date -u +%Y%m%d-%H%M).apk"
+          gh release view "$TAG" --repo ${{ github.repository }} > /dev/null 2>&1 || \
+            gh release create "$TAG" --repo ${{ github.repository }} --title "课表 APK" --notes "auto build"
+          # 上传新命名的包
+          for f in out/app-release.apk out/app-debug.apk; do
             [ -e "$f" ] || continue
-            echo "发布 $f 大小 $(stat -c%s "$f") md5 $(md5sum "$f" | cut -d' ' -f1)"
-            gh release view builtin-latest --repo ${{ github.repository }} > /dev/null 2>&1 || \
-              gh release create builtin-latest --repo ${{ github.repository }} --title "课表 APK" --notes "auto build"
-            gh release upload builtin-latest "$f" --repo ${{ github.repository }} --clobber
+            cp "$f" "out/$NAME"
+            echo "发布为 $NAME 大小 $(stat -c%s "$f") md5 $(md5sum "$f" | cut -d' ' -f1)"
+            gh release upload "$TAG" "out/$NAME" --repo ${{ github.repository }} --clobber
+            break
           done
-          gh release list --repo ${{ github.repository }} --limit 1 || true
+          # 清掉旧命名的 asset，避免误下
+          for old in app-release.apk app-debug.apk; do
+            gh release delete-asset "$TAG" "$old" --repo ${{ github.repository }} --yes 2>/dev/null || true
+          done
+          echo "--- release 现有文件 ---"
+          gh release view "$TAG" --repo ${{ github.repository }} --json assets -q '.assets[].name' || true
