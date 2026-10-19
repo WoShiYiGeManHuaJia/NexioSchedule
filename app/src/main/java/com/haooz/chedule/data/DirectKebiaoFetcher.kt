@@ -19,6 +19,13 @@ import java.net.URLEncoder
  */
 object DirectKebiaoFetcher {
 
+    /**
+     * 构建标识：每次改动出包都会改这里。
+     * 目的很直接——让用户点刷新时能从弹窗里立刻看出装的是不是新包，
+     * 不用靠文件大小、更新时间这些容易被缓存骗过去的间接线索。
+     */
+    const val BUILD_TAG = "20261019-2"
+
     private const val BASE = "http://222.243.161.213:81/hnrjzyxyhd"
 
     /**
@@ -179,7 +186,8 @@ object DirectKebiaoFetcher {
                 "UnknownHost" in n || "NoRoute" in n || "ECONNREFUSED" in m ||
                 "ETIMEDOUT" in m || "ENETUNREACH" in m || "timeout" in m.lowercase() ->
                 "连不上教务服务器（$BASE）。该地址国内公网可直接访问，" +
-                    "无需校园网；请检查网络后重试"
+                    "无需校园网；请检查网络后重试。\n\n" +
+                    "（构建 $BUILD_TAG —— 看不到这行就说明装的还是旧包）"
 
             "UnknownHost" in n || "Unable to resolve host" in m ->
                 "解析不到教务服务器地址，请检查网络"
