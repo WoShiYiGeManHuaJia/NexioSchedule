@@ -8,61 +8,52 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: 解包校验
+      - name: 逐条拆包核对
         run: |
           python3 - <<'PY' > vlog_out.txt 2>&1
           import urllib.request, zipfile, io, json
-          URL = "https://github.com/WoShiYiGeManHuaJia/NexioSchedule/releases/download/builtin-latest/app-release.apk"
-          print("下载:", URL)
-          req = urllib.request.Request(URL, headers={"User-Agent": "Mozilla/5.0"})
-          data = urllib.request.urlopen(req, timeout=240).read()
-          print("大小: %.2f MB" % (len(data)/1048576))
-          z = zipfile.ZipFile(io.BytesIO(data))
-          print("\n=== assets ===")
-          for n in z.namelist():
-              if n.startswith("assets/"):
-                  print("  %-42s %d 字节" % (n, z.getinfo(n).file_size))
-          print("\n=== builtin_courses.json ===")
-          try:
-              j = json.loads(z.read("assets/builtin_courses.json").decode("utf-8"))
-              print("  课程数:", len(j["courses"]))
-              print("  meta:", json.dumps(j.get("meta"), ensure_ascii=False))
-              D = ["", "周一","周二","周三","周四","周五","周六","周日"]
-              for x in j["courses"][:5]:
-                  print("   ", x["name"], D[x["dayOfWeek"]],
-                        "%d-%d节" % (x["startSection"], x["endSection"]),
-                        "第%d-%d周" % (x["startWeek"], x["endWeek"]), x["classroom"])
-          except Exception as e:
-              print("  读取失败:", e)
-          print("\n=== dex 字符串扫描 ===")
-          names = [n for n in z.namelist() if n.endswith(".dex")]
-          print("  dex:", names)
-          blob = b"".join(z.read(n) for n in names)
-          print("  总大小: %.1f MB" % (len(blob)/1048576))
-          pats = [
-              ("内置节假日 2026-09-25", "2026-09-25"),
-              ("内置节假日 2026-10-07", "2026-10-07"),
-              ("内置调休 9月28日", "9月28日"),
-              ("内置课表 builtin_courses", "builtin_courses"),
-              ("新文案 无需校园网", "无需校园网"),
-              ("旧文案 请连校园网 WiFi", "请连校园网 WiFi"),
-              ("GitHub兜底 jsdelivr", "jsdelivr"),
-          ]
-          for label, pat in pats:
-              hit = pat.encode("utf-8") in blob
-              print("   %s %-26s %s" % ("✓" if hit else "✗", label, pat))
+          URL="https://github.com/WoShiYiGeManHuaJia/NexioSchedule/releases/download/builtin-latest/app-release.apk"
+          req=urllib.request.Request(URL,headers={"User-Agent":"Mozilla/5.0"})
+          data=urllib.request.urlopen(req,timeout=240).read()
+          z=zipfile.ZipFile(io.BytesIO(data))
+          print("APK: %.2f MB"%(len(data)/1048576))
+          blob=b"".join(z.read(n) for n in z.namelist() if n.endswith(".dex"))
+          print("dex: %.1f MB\n"%(len(blob)/1048576))
+
+          print("=== 内置节假日（截图：2026/09/25 至 2026/10/07，13天）===")
+          for p in ["2026-09-25","2026-10-07"]:
+              print("  %s %s"%("✓" if p.encode() in blob else "✗",p))
+
+          print("\n=== 内置调休 5 条（截图逐条核对）===")
+          rows=[("2026-09-20","补9月28日的课"),("2026-10-10","补9月29日的课"),
+                ("2026-10-17","补9月30日的课"),("2026-10-24","补10月6日的课"),
+                ("2026-10-31","补10月7日的课")]
+          ok=0
+          for d,n in rows:
+              h1=d.encode() in blob; h2=n.encode("utf-8") in blob
+              if h1 and h2: ok+=1
+              print("  %s %s  %s   (日期%s / 名称%s)"%(
+                  "✓" if (h1 and h2) else "✗", d, n,
+                  "✓" if h1 else "✗", "✓" if h2 else "✗"))
+          print("  小计: %d/5"%ok)
+
+          print("\n=== 关键修复是否在包里 ===")
+          for label,p in [("loadAllByYear 修复标记 defaultYears","defaultYears"),
+                          ("新文案 无需校园网","无需校园网"),
+                          ("GitHub兜底 jsdelivr","jsdelivr")]:
+              print("  %s %-30s %s"%("✓" if p.encode() in blob else "✗",label,p))
+          print("\n=== 旧文案（应已消失）===")
+          for p in ["请连校园网 WiFi"]:
+              print("  %s %s"%("✗ 仍在" if p.encode("utf-8") in blob else "✓ 已移除",p))
           PY
           cat vlog_out.txt
-
-      - name: 保存结果
+      - name: 保存
         run: |
           mkdir -p vlog && cp vlog_out.txt vlog/out.txt
           git config user.name bot; git config user.email b@e.com
           git add vlog/ || true
-          git diff --cached --quiet || git commit -m "verify: APK 解包校验结果"
+          git diff --cached --quiet || git commit -m "verify: 逐条核对内置节假日与调休"
           for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
