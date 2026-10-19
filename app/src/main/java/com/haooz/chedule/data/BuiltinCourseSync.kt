@@ -160,12 +160,13 @@ object BuiltinCourseSync {
             // 不覆盖当前周：数据源里的 current_week 是路由器跑的那天，
             // 用它会把周次拽回去。周次由 App 按开学日期自行推算。
 
+            val tag = DirectKebiaoFetcher.BUILD_TAG
             SyncResult(
                 ok = true,
                 message = if (changed) {
-                    "[$src] 已更新 ${courses.size} 门课（原始 $rawCount 条）"
+                    "[$src] 已更新 ${courses.size} 门课（原始 $rawCount 条）\n构建 $tag"
                 } else {
-                    "[$src] 已是最新：${courses.size} 门课，无变化"
+                    "[$src] 已是最新：${courses.size} 门课，无变化\n构建 $tag"
                 },
                 rawCount = rawCount,
                 courseCount = courses.size,
