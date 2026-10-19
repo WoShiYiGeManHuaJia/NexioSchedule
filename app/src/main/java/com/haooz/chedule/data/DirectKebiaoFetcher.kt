@@ -12,9 +12,10 @@ import java.net.URLEncoder
 /**
  * 单人自用版：手机直连学校教务接口抓课表，不再依赖路由器中转。
  *
- * 接口是教育网内网地址（222.243.161.213:81），境外连不上，所以只能由手机
- *（连校园网 WiFi 时）或路由器这类在国内网内的设备来抓。这里在 App 内
- * 用原生 HttpURLConnection 实现，不引入 Python/Chaquopy，包体与启动都不受影响。
+ * 接口是公网地址（222.243.161.213:81），国内网络（含移动流量）直连即可，
+ * 不需要连校园网 WiFi。它只是屏蔽境外访问，所以在国外 / 境外机房连不上。
+ * 这里在 App 内用原生 HttpURLConnection 实现，
+ * 不引入 Python/Chaquopy，包体与启动都不受影响。
  */
 object DirectKebiaoFetcher {
 
@@ -177,7 +178,8 @@ object DirectKebiaoFetcher {
             "Timeout" in n || "SocketTimeout" in n || "ConnectException" in n ||
                 "UnknownHost" in n || "NoRoute" in n || "ECONNREFUSED" in m ||
                 "ETIMEDOUT" in m || "ENETUNREACH" in m || "timeout" in m.lowercase() ->
-                "连不上教务服务器（$BASE）。这是教育网内网地址，请连校园网 WiFi 后再刷新"
+                "连不上教务服务器（$BASE）。该地址国内公网可直接访问，" +
+                    "无需校园网；请检查网络后重试"
 
             "UnknownHost" in n || "Unable to resolve host" in m ->
                 "解析不到教务服务器地址，请检查网络"
