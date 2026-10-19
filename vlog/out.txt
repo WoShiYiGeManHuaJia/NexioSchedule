@@ -2,7 +2,7 @@
 大小: 3.15 MB
 
 === assets ===
-  assets/dexopt/baseline.prof                4848 字节
+  assets/dexopt/baseline.prof                4870 字节
   assets/dexopt/baseline.profm               574 字节
   assets/LICENSE                             34523 字节
   assets/builtin_courses.json                8808 字节
@@ -26,6 +26,6 @@
    ✓ 内置节假日 2026-10-07           2026-10-07
    ✓ 内置调休 9月28日                 9月28日
    ✓ 内置课表 builtin_courses       builtin_courses
-   ✗ 新文案 无需校园网                  无需校园网
-   ✓ 旧文案 请连校园网 WiFi             请连校园网 WiFi
-   ✗ GitHub兜底 jsdelivr          jsdelivr
+   ✓ 新文案 无需校园网                  无需校园网
+   ✗ 旧文案 请连校园网 WiFi             请连校园网 WiFi
+   ✓ GitHub兜底 jsdelivr          jsdelivr
