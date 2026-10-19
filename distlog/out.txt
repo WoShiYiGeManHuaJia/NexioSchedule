@@ -1,0 +1,10 @@
+=== 1. 下载 release APK ===
+  下载成功 3.16 MB
+
+=== 2. 写入本仓库 app-release.apk ===
+  已提交 1c77a91f
+
+=== 3. 探测 jsDelivr 可达性 ===
+  cdn.jsdelivr.net -> HTTP 200  3.16MB
+  fastly.jsdelivr.net -> HTTP 200  3.16MB
+  gcore.jsdelivr.net -> HTTP 200  3.16MB
