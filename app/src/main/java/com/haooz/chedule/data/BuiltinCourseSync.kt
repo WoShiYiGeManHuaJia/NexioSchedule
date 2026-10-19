@@ -30,11 +30,12 @@ object BuiltinCourseSync {
     suspend fun sync(context: Context): SyncResult = withContext(Dispatchers.IO) {
         try {
             // 首选手机直连教务（国内公网可达，无需校园网），拿到的是最新数据。
-            val textSure: String
-            val src: String
-            try {
-                textSure = DirectKebiaoFetcher.fetchAsWeeksCacheJson(context)
-                src = "教务直连"
+            //
+            // 注意：这里必须用 try-catch「表达式」一次性解构出结果，
+            // 不能先声明 val 再在 try 里赋值——Kotlin 不允许在 try 块内给外部 val 赋值
+            // （'val' cannot be reassigned），那样编译不过。
+            val pair: Pair<String, String> = try {
+                DirectKebiaoFetcher.fetchAsWeeksCacheJson(context) to "教务直连"
             } catch (e: Exception) {
                 // 直连失败时是否回落 GitHub，取决于本地有没有课表：
                 //  - 本地已有课表：绝不覆盖，直接报真实错误。
@@ -44,10 +45,12 @@ object BuiltinCourseSync {
                 if (repoNow.getAllCourses().isNotEmpty()) {
                     return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
                 }
-                textSure = fetchFromGithub()
+                val gh = fetchFromGithub()
                     ?: return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
-                src = "GitHub 兜底"
+                gh to "GitHub 兜底"
             }
+            val textSure = pair.first
+            val src = pair.second
 
             val root = JSONObject(textSure)
             val weeks = root.optJSONObject("weeks")
