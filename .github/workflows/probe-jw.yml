@@ -1,0 +1,46 @@
+name: probe-jw
+on:
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 探测教务接口
+        run: |
+          python3 - <<'PY' > probe_out.txt 2>&1
+          import socket, urllib.request, urllib.parse, json, time
+          HOST="222.243.161.213"; PORT=81
+          BASE=f"http://{HOST}:{PORT}/hnrjzyxyhd"
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          print("=== 1. TCP ===")
+          t=time.time()
+          try:
+              s=socket.create_connection((HOST,PORT),timeout=12); s.close()
+              print("  通 %.0fms"%((time.time()-t)*1000))
+          except Exception as e:
+              print("  失败",repr(e))
+          print("\n=== 2. 登录 ===")
+          q=urllib.parse.urlencode({"userNo":"202405190231","pwd":"QlRZY0NDcTBDRG5uQnZ4TDROSWFzZz09","encode":"1","captchaData":"","codeVal":""})
+          url=f"{BASE}/login?{q}"
+          print("  URL:",url[:110])
+          try:
+              req=urllib.request.Request(url,method="POST",headers={"User-Agent":UA})
+              t=time.time()
+              with urllib.request.urlopen(req,timeout=25) as r:
+                  body=r.read().decode('utf-8','ignore')
+                  print("  HTTP",r.status," %.0fms"%((time.time()-t)*1000))
+                  print("  返回:",body[:500])
+          except Exception as e:
+              print("  失败",repr(e)[:300])
+          PY
+          cat probe_out.txt
+      - name: 保存
+        run: |
+          mkdir -p probe && cp probe_out.txt probe/result.txt
+          git config user.name bot; git config user.email b@e.com
+          git add probe/ || true
+          git diff --cached --quiet || git commit -m "probe: 教务接口连通性"
+          for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
