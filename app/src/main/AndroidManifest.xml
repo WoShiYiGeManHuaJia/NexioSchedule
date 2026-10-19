@@ -172,6 +172,12 @@
             android:label="交流与反馈"
             android:theme="@style/Theme.课程表" />
         <activity
+            android:name=".ui.activities.KebiaoDiagActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
+            android:label="课表直连诊断"
+            android:theme="@style/Theme.课程表" />
+        <activity
             android:name=".ui.activities.PreferenceSettingsActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
