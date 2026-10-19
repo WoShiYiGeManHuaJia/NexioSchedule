@@ -8,6 +8,13 @@ on:
 permissions:
   contents: write
 
+# 同一时间只允许一个构建，后来的排队等（不取消、不并发）。
+# 之前并发构建会互相覆盖 release 上同名的 APK，
+# 最后跑完的可能是代码最旧的那一台，导致新代码出不了包。
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
