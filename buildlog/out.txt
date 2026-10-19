@@ -1,17 +1,17 @@
-commit: 29722cd
+commit: 89ff51b
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
 --- 编译错误 ---
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:488:60 Unresolved reference 'onSurfaceVariant'.
 FAILURE: Build failed with an exception.
-BUILD FAILED in 2m 1s
+BUILD FAILED in 2m 26s
 --- build.log 尾部 ---
-> Task :app:validateSigningRelease
-> Task :app:writeReleaseAppMetadata
-> Task :app:writeReleaseSigningConfigVersions
-> Task :app:collectReleaseDependencies
-> Task :app:sdkReleaseDependencyData
+> Task :app:downloadEduIndex
+[EduIndex] 已拉取最新索引 -> /home/runner/work/NexioSchedule/NexioSchedule/app/src/main/assets/eduloader/school_index.pb
+
+> Task :app:mergeReleaseAssets
+> Task :app:compressReleaseAssets
 > Task :app:mergeReleaseResources
 > Task :app:processReleaseResources
 > Task :app:compileReleaseKotlin
@@ -34,11 +34,11 @@ Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 1s
+BUILD FAILED in 2m 26s
 36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/ui/components/ScheduleTopBar.kt:488:60 Unresolved reference 'onSurfaceVariant'.
+> Task :app:compileDebugKotlin FAILED
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
@@ -55,6 +55,6 @@ Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.a
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 24s
+BUILD FAILED in 1m 16s
 32 actionable tasks: 24 executed, 8 from cache
 Configuration cache entry stored.
