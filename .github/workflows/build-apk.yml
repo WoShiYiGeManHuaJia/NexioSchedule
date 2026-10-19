@@ -133,24 +133,33 @@ jobs:
         run: |
           set +e
           ls -lh out/
-          # 只保留一个带日期的文件名。
-          # 之前 release 上同时挂着 app-release / app-debug 两个（其中一个是 10-05 的旧包），
-          # 用户很容易下错，装完发现还是老样子。现在删掉旧命名，只留这一个。
+          # 固定名 app-release.apk = 用户下载用的稳定入口，必须每次都是最新。
+          # 带时间戳的只作存档。
           TAG="builtin-latest"
           NAME="NexioSchedule-$(date -u +%Y%m%d-%H%M).apk"
           gh release view "$TAG" --repo ${{ github.repository }} > /dev/null 2>&1 || \
             gh release create "$TAG" --repo ${{ github.repository }} --title "课表 APK" --notes "auto build"
-          # 上传新命名的包
+          # 固定名 app-release.apk 必须始终存在且始终是最新的：
+          # 用户拿的是固定下载链接，文件名一变链接就 404，
+          # 表现就是"我明明改了，他下的还是旧的/下不到"。
           for f in out/app-release.apk out/app-debug.apk; do
             [ -e "$f" ] || continue
-            cp "$f" "out/$NAME"
-            echo "发布为 $NAME 大小 $(stat -c%s "$f") md5 $(md5sum "$f" | cut -d' ' -f1)"
-            gh release upload "$TAG" "out/$NAME" --repo ${{ github.repository }} --clobber
+            echo "发布为 app-release.apk 大小 $(stat -c%s "$f") md5 $(md5sum "$f" | cut -d' ' -f1)"
+            cp "$f" out/app-release.apk
+            gh release upload "$TAG" out/app-release.apk --repo ${{ github.repository }} --clobber
             break
           done
-          # 清掉旧命名的 asset，避免误下
-          for old in app-release.apk app-debug.apk; do
-            gh release delete-asset "$TAG" "$old" --repo ${{ github.repository }} --yes 2>/dev/null || true
+          # 同时留一份带时间戳的存档，方便回溯；只保留最近 3 份，避免越堆越多
+          for f in out/app-release.apk; do
+            [ -e "$f" ] || continue
+            cp "$f" "out/$NAME"
+            gh release upload "$TAG" "out/$NAME" --repo ${{ github.repository }} --clobber
           done
+          gh release view "$TAG" --repo ${{ github.repository }} --json assets -q '.assets[].name' \
+            | grep -E '^NexioSchedule-[0-9]{8}-[0-9]{4}\.apk$' | sort -r | tail -n +4 \
+            | while read -r oldname; do
+                echo "清理旧存档 $oldname"
+                gh release delete-asset "$TAG" "$oldname" --repo ${{ github.repository }} --yes 2>/dev/null || true
+              done
           echo "--- release 现有文件 ---"
           gh release view "$TAG" --repo ${{ github.repository }} --json assets -q '.assets[].name' || true
