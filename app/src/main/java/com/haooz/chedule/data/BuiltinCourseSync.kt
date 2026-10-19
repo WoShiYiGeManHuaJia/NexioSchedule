@@ -29,16 +29,25 @@ object BuiltinCourseSync {
 
     suspend fun sync(context: Context): SyncResult = withContext(Dispatchers.IO) {
         try {
-            // 只走手机直连教务接口，不再回落 CDN。
-            // 原因：路由器已停用，weeks_cache.json 永久停在 9-16（第2周），
-            // 回落只会拿三周前的死数据覆盖当前课表——比不刷新更有害。
-            // 现在直连失败就明确报错，课表保持原样不动。
-            val textSure: String = try {
-                DirectKebiaoFetcher.fetchAsWeeksCacheJson(context)
+            // 首选手机直连教务（国内公网可达，无需校园网），拿到的是最新数据。
+            val textSure: String
+            val src: String
+            try {
+                textSure = DirectKebiaoFetcher.fetchAsWeeksCacheJson(context)
+                src = "教务直连"
             } catch (e: Exception) {
-                return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
+                // 直连失败时是否回落 GitHub，取决于本地有没有课表：
+                //  - 本地已有课表：绝不覆盖，直接报真实错误。
+                //    兜底源更新频率低于教务，拿旧数据盖掉在用的课表比不刷新更有害。
+                //  - 本地为空（全新安装 / 清过数据）：回落 GitHub，先让课表有内容可用。
+                val repoNow = CourseRepository.getInstance(context.applicationContext)
+                if (repoNow.getAllCourses().isNotEmpty()) {
+                    return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
+                }
+                textSure = fetchFromGithub()
+                    ?: return@withContext SyncResult(false, DirectKebiaoFetcher.hintOf(e))
+                src = "GitHub 兜底"
             }
-            val src = "教务直连"
 
             val root = JSONObject(textSure)
             val weeks = root.optJSONObject("weeks")
@@ -162,6 +171,43 @@ object BuiltinCourseSync {
         } catch (e: Exception) {
             SyncResult(false, "刷新失败：" + (e.message ?: e.javaClass.simpleName))
         }
+    }
+
+    /**
+     * 兜底数据源：手机直连教务失败时的退路。
+     * raw.githubusercontent.com 在国内常连不上，所以先走 jsDelivr CDN，
+     * 再走 GitHub Pages，最后才是 raw。任一源拿到有效数据就停。
+     */
+    private val GH_SOURCES = listOf(
+        "https://cdn.jsdelivr.net/gh/WoShiYiGeManHuaJia/kebiao-page@main/weeks_cache.json",
+        "https://woshiyigemanhuajia.github.io/kebiao-page/weeks_cache.json",
+        "https://raw.githubusercontent.com/WoShiYiGeManHuaJia/kebiao-page/main/weeks_cache.json",
+    )
+
+    private fun fetchFromGithub(): String? {
+        for (u in GH_SOURCES) {
+            var conn: java.net.HttpURLConnection? = null
+            try {
+                conn = (java.net.URL(u).openConnection() as java.net.HttpURLConnection).apply {
+                    connectTimeout = 12_000
+                    readTimeout = 20_000
+                    setRequestProperty("User-Agent", "Mozilla/5.0")
+                    instanceFollowRedirects = true
+                }
+                val code = conn.responseCode
+                if (code !in 200..299) continue
+                val text = conn.inputStream.bufferedReader().use { it.readText() }
+                if (text.isBlank()) continue
+                // 必须真的带 weeks 字段，否则当成没拿到
+                if (org.json.JSONObject(text).optJSONObject("weeks") == null) continue
+                return text
+            } catch (_: Exception) {
+                // 换下一个源
+            } finally {
+                runCatching { conn?.disconnect() }
+            }
+        }
+        return null
     }
 
     private fun fingerprint(list: List<Course>): String = list
