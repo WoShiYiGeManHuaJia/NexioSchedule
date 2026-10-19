@@ -1,0 +1,71 @@
+name: dist-apk
+on:
+  workflow_dispatch:
+jobs:
+  dist:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 取最新 APK 并放到仓库根目录
+        run: |
+          set +e
+          python3 - <<'PY' > dist_out.txt 2>&1
+          import urllib.request, json, base64, urllib.parse, time, os
+          TOK=os.environ["GH_TOKEN"]
+          H={"Authorization":"token "+TOK,"User-Agent":"x","Accept":"application/vnd.github+json"}
+          R='WoShiYiGeManHuaJia/NexioSchedule'
+          print("=== 1. 下载 release APK ===")
+          URL="https://github.com/%s/releases/download/builtin-latest/app-release.apk"%R
+          try:
+              req=urllib.request.Request(URL,headers={"User-Agent":"Mozilla/5.0"})
+              data=urllib.request.urlopen(req,timeout=240).read()
+              print("  下载成功 %.2f MB"%(len(data)/1048576))
+          except Exception as e:
+              print("  失败",repr(e)[:200]); raise SystemExit(1)
+
+          print("\n=== 2. 写入本仓库 app-release.apk ===")
+          P="app-release.apk"
+          q=urllib.parse.quote(P,safe='')
+          sha=None
+          try:
+              d=json.load(urllib.request.urlopen(urllib.request.Request(
+                  'https://api.github.com/repos/%s/contents/%s?ref=master'%(R,q),headers=H),timeout=120))
+              sha=d.get('sha')
+          except Exception: pass
+          pl={"message":"dist: 更新 app-release.apk（供国内 CDN 下载）",
+              "content":base64.b64encode(data).decode(),"branch":"master"}
+          if sha: pl["sha"]=sha
+          r=urllib.request.Request('https://api.github.com/repos/%s/contents/%s'%(R,q),
+              data=json.dumps(pl).encode(),method="PUT",headers=H)
+          cs=json.load(urllib.request.urlopen(r,timeout=300))["commit"]["sha"][:8]
+          print("  已提交",cs)
+          time.sleep(25)
+
+          print("\n=== 3. 探测 jsDelivr 可达性 ===")
+          for u in ["https://cdn.jsdelivr.net/gh/%s@master/app-release.apk"%R,
+                    "https://fastly.jsdelivr.net/gh/%s@master/app-release.apk"%R,
+                    "https://gcore.jsdelivr.net/gh/%s@master/app-release.apk"%R]:
+              try:
+                  rq=urllib.request.Request(u,method="HEAD",headers={"User-Agent":"Mozilla/5.0"})
+                  resp=urllib.request.urlopen(rq,timeout=90)
+                  print("  %s -> HTTP %s  %.2fMB"%(u.split('/')[2],resp.status,
+                        int(resp.headers.get('Content-Length',0))/1048576))
+              except Exception as e:
+                  print("  %s -> 失败 %s"%(u.split('/')[2],str(e)[:80]))
+          PY
+          cat dist_out.txt
+          echo done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 保存
+        run: |
+          mkdir -p distlog && cp dist_out.txt distlog/out.txt
+          git config user.name bot; git config user.email b@e.com
+          git add distlog/ || true
+          git diff --cached --quiet || git commit -m "distlog"
+          for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
