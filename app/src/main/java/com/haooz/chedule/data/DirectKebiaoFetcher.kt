@@ -24,9 +24,12 @@ object DirectKebiaoFetcher {
      * 目的很直接——让用户点刷新时能从弹窗里立刻看出装的是不是新包，
      * 不用靠文件大小、更新时间这些容易被缓存骗过去的间接线索。
      */
-    const val BUILD_TAG = "20261019-2"
+    const val BUILD_TAG = "20261020-1"
 
     private const val BASE = "http://222.243.161.213:81/hnrjzyxyhd"
+
+    private const val HOST = "222.243.161.213"
+    private const val PORT = 81
 
     /**
      * UA 必须伪装成正常浏览器。
@@ -199,7 +202,96 @@ object DirectKebiaoFetcher {
             m.startsWith("HTTP ") -> "教务接口返回异常：$m"
 
             else -> "刷新失败：$m"
+        } + "\n\n[原始错误] ${e.javaClass.simpleName}: ${m.take(200)}"
+    }
+
+    /**
+     * 分步网络自检，把「到底断在哪一步」原样报出来。
+     *
+     * 之前 hintOf 把所有异常都压成一句「连不上教务服务器」，
+     * 用户只看到同一句话，我这边又连不上这个地址（境外出口被拦），
+     * 两边都猜，问题一直挂着。现在逐步跑，每一步的结果都写进报告，
+     * 用户截图发我就能定位：是端口不通、HTTP 被拒、还是账号被拒。
+     */
+    fun diagnose(context: Context): String {
+        val sb = StringBuilder()
+        fun line(s: String) { sb.append(s).append('\n') }
+
+        line("── 网络自检 ──")
+        // 1. 系统网络
+        try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE)
+                as android.net.ConnectivityManager
+            val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+            val internet = caps?.hasCapability(
+                android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
+            ) == true
+            line("1. 系统网络: ${if (internet) "已连接互联网" else "无可用网络"}")
+        } catch (e: Exception) {
+            line("1. 系统网络: 读取失败 ${e.message}")
         }
+
+        // 2. TCP 端口
+        val t0 = System.currentTimeMillis()
+        try {
+            java.net.Socket().use { s ->
+                s.connect(java.net.InetSocketAddress(HOST, PORT), 6000)
+            }
+            line("2. TCP $HOST:$PORT: 通 (${System.currentTimeMillis() - t0}ms)")
+        } catch (e: Exception) {
+            line(
+                "2. TCP $HOST:$PORT: 失败 ${e.javaClass.simpleName}: " +
+                    "${e.message?.take(80)} (${System.currentTimeMillis() - t0}ms)"
+            )
+            line("→ 端口不可达，后续步骤跳过")
+            return sb.toString().trimEnd()
+        }
+
+        // 3. 登录接口
+        val c = loadCredential(context)
+        val q = "userNo=${enc(c.userNo)}&pwd=${enc(c.pwdEnc)}" +
+            "&encode=1&captchaData=&codeVal="
+        val loginRaw: String
+        try {
+            val t1 = System.currentTimeMillis()
+            loginRaw = http("$BASE/login?$q", emptyMap(), "POST", 12_000)
+            line("3. 登录接口: HTTP 200 (${System.currentTimeMillis() - t1}ms)")
+        } catch (e: Exception) {
+            line("3. 登录接口: 失败 ${e.javaClass.simpleName}: ${e.message?.take(150)}")
+            return sb.toString().trimEnd()
+        }
+
+        // 4. 登录结果
+        val lj = runCatching { JSONObject(loginRaw) }.getOrNull()
+        if (lj == null) {
+            line("4. 登录返回: 非 JSON —— ${loginRaw.take(120)}")
+            return sb.toString().trimEnd()
+        }
+        val code = lj.optString("code")
+        if (code != "1") {
+            line("4. 登录被拒: code=$code ${loginRaw.take(160)}")
+            return sb.toString().trimEnd()
+        }
+        val token = lj.optJSONObject("data")?.optString("token").orEmpty()
+        line("4. 登录: 成功 ${if (token.isBlank()) "(但无 token)" else "(token ${token.length} 位)"}")
+        if (token.isBlank()) return sb.toString().trimEnd()
+
+        // 5. 课表接口
+        try {
+            val t2 = System.currentTimeMillis()
+            val raw = http(
+                "$BASE/student/curriculum?week=1&kbjcmsid=",
+                mapOf("Token" to token, "schoolCode" to c.schoolCode),
+                "GET", 12_000,
+            )
+            val j = JSONObject(raw)
+            val n = j.optJSONObject("data")?.optJSONArray("courses")?.length()
+                ?: j.optJSONArray("data")?.length() ?: 0
+            line("5. 课表接口: HTTP 200 (${System.currentTimeMillis() - t2}ms) 第1周 ${n} 条")
+        } catch (e: Exception) {
+            line("5. 课表接口: 失败 ${e.javaClass.simpleName}: ${e.message?.take(150)}")
+        }
+        return sb.toString().trimEnd()
     }
 
     /**
