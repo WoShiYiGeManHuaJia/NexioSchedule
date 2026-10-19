@@ -165,7 +165,10 @@ fun AboutScreen(
         } ?: context.applicationInfo?.nonLocalizedLabel?.toString() ?: "Nexio课程表"
     }
     val appVersion = remember {
-        packageInfo?.versionName ?: "未知版本"
+        // 带上代码构建号：用户在这儿一眼能对上装的是不是新包，
+        // 不用去比对文件大小或更新时间（那些容易被缓存/镜像骗过去）。
+        val v = packageInfo?.versionName ?: "未知版本"
+        "$v · 构建 ${com.haooz.chedule.data.DirectKebiaoFetcher.BUILD_TAG}"
     }
 
     val backdrop = rememberBlurBackdrop()
