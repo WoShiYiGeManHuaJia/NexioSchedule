@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.haooz.chedule.data.AutoKebiaoSync
 import com.haooz.chedule.data.BuiltinCourseSync
 import com.haooz.chedule.data.DirectKebiaoFetcher
 import com.haooz.chedule.ui.theme.CourseScheduleTheme
@@ -61,6 +62,11 @@ private fun KebiaoDiagScreen(onBack: () -> Unit) {
     var sch by remember { mutableStateOf(cred.schoolCode) }
     var report by remember { mutableStateOf("点下方按钮开始。") }
     var busy by remember { mutableStateOf(false) }
+    var last by remember {
+        mutableStateOf(
+            AutoKebiaoSync.lastResult(context).ifBlank { "（暂无记录：打开 App 后会自动同步一次）" }
+        )
+    }
 
     fun copy(text: String) {
         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -127,22 +133,12 @@ private fun KebiaoDiagScreen(onBack: () -> Unit) {
                             )
                             scope.launch {
                                 val r = withContext(Dispatchers.IO) {
-                                    runCatching { BuiltinCourseSync.sync(context) }
-                                        .getOrElse {
-                                            BuiltinCourseSync.SyncResult(
-                                                false,
-                                                "同步抛异常：${it.javaClass.simpleName}: ${it.message?.take(200)}",
-                                            )
-                                        }
+                                    runCatching { AutoKebiaoSync.force(context) }
+                                        .getOrElse { "同步抛异常：${it.javaClass.simpleName}: ${it.message?.take(200)}" }
                                 }
-                                report = buildString {
-                                    append(if (r.ok) "✅ 刷新成功\n" else "❌ 刷新失败\n")
-                                    append("课程数：${r.courseCount}　原始条目：${r.rawCount}\n")
-                                    if (r.changed) append("（课表内容有变化，已写入）\n")
-                                    append("\n")
-                                    append(r.message)
-                                }
+                                report = r
                                 busy = false
+                                last = AutoKebiaoSync.lastResult(context)
                             }
                         },
                     )
@@ -183,6 +179,28 @@ private fun KebiaoDiagScreen(onBack: () -> Unit) {
                     text = "复制结果",
                     onClick = { copy(report) },
                     modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            colors = CardDefaults.defaultColors(MiuixTheme.colorScheme.surface),
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+                Text(
+                    text = "自动同步记录（启动即静默同步，无需手动点）",
+                    fontSize = 13.sp,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                )
+                Text(
+                    text = last,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = MiuixTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 6.dp),
                 )
             }
         }
