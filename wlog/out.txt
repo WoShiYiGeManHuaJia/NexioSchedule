@@ -1,5 +1,4 @@
-=== 1. 校验 token ===
-   success=True  现有 scripts=['md2017', 'round-snow-b113', 'yun139-panel']
-
-=== 2. 上传 Worker 脚本 ===
-   失败 <HTTPError 403: 'Forbidden'>
+待试 token 数: 3
+Traceback (most recent call last):
+  File "<stdin>", line 11, in <module>
+TypeError: can only concatenate str (not "NoneType") to str
