@@ -1,5 +1,5 @@
-source_commit=8855231
-apk_md5=ca014bab1126974eeb29964725cfbff0
-apk_sha256=eed0b28bc9f4da3e3808f0d7754f11576fb21344f627948474ed3ccf0d473092
+source_commit=19f656f
+apk_md5=a5047a97fe119f0f3d5ee3d0af2191ce
+apk_sha256=eff8f0aa39f9afb9a6c565b52a57a62e7ae5f8c09bb1b67fcefcc3a72a07120d
 apk_size=3334090
-built_at=2026-10-20T03:58:34Z
+built_at=2026-10-20T04:44:47Z
