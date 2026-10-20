@@ -22,7 +22,6 @@ jobs:
           print("待试 token 数:",len(TOKS))
           TOK=None
           NAME="kebiao"; SUB="wispy-hill-817a"
-          H={"Authorization":"Bearer "+TOK,"User-Agent":"x"}
           print("=== 1. 探测可用 token ===")
           for i,t in enumerate(TOKS):
               H={"Authorization":"Bearer "+t,"User-Agent":"x"}
