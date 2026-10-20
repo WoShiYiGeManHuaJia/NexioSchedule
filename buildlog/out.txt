@@ -1,4 +1,4 @@
-commit: 0cb120a
+commit: 080eea4
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
@@ -25,7 +25,7 @@ e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/ha
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:57 'val <T : Any> KClass<T>.javaClass: Class<KClass<T>>' is deprecated. Use 'java' property to get Java class corresponding to this Kotlin class or cast this instance to Any if you really want to get the runtime Java class of this implementation of KClass.
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:256:1 Syntax error: Expecting a top level declaration.
 FAILURE: Build failed with an exception.
-BUILD FAILED in 2m 14s
+BUILD FAILED in 2m 24s
 --- build.log 尾部 ---
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:21 Syntax error: Expecting member declaration.
 e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:30 Syntax error: Expecting member declaration.
@@ -54,7 +54,7 @@ Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 14s
+BUILD FAILED in 2m 24s
 36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
