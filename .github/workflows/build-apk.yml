@@ -191,49 +191,35 @@ jobs:
             echo "apk_sha256=$(sha256sum "$SRC" | cut -d' ' -f1)"
             echo "apk_size=$(stat -c%s "$SRC")"
             echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          } > buildlog/fingerprint.txt
-          cat buildlog/fingerprint.txt
+          } > /tmp/fp.txt
+          cat /tmp/fp.txt
+          mkdir -p buildlog && cp /tmp/fp.txt buildlog/fingerprint.txt
           # 用 git 命令行提交：contents API 对 >1MB 文件会静默失败（3.3MB 必失败），
           # 之前就是它导致仓库里的 app-release.apk 一直是旧包。
           # [skip ci] + workflow 的 paths-ignore 双保险，避免这次提交再触发构建。
           cp "$SRC" app-release.apk
           git config user.name "apk-bot"
           git config user.email "apk-bot@users.noreply.github.com"
-          git add -f app-release.apk buildlog/fingerprint.txt
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          # 前面的诊断步骤会用 API 提交 buildlog，远程已有新 commit；
+          # 原先直接 commit+push 会因非快进被拒，rebase 又因未暂存改动失败。
+          # 这里直接从 origin/master 新建分支再提交，保证是快进。
+          git fetch origin master >> /tmp/gitinfo.txt 2>&1
+          git checkout -f -B apkdist origin/master >> /tmp/gitinfo.txt 2>&1
+          cp "$SRC" app-release.apk
+          cp /tmp/fp.txt buildlog/fingerprint.txt 2>/dev/null || true
+          git add -f app-release.apk buildlog/fingerprint.txt >> /tmp/gitinfo.txt 2>&1
+          git commit -m "apk: $HEAD_SHA [skip ci]" >> /tmp/gitinfo.txt 2>&1
+          echo "commit_exit=$?" >> /tmp/gitinfo.txt
+          git push origin apkdist:master >> /tmp/gitinfo.txt 2>&1
+          echo "push_exit=$?" >> /tmp/gitinfo.txt
+          git checkout -f master >> /tmp/gitinfo.txt 2>&1
           {
-            echo "=== 仓库现有 APK md5 ==="
-            git show HEAD:app-release.apk 2>/dev/null | md5sum | cut -d' ' -f1
-            echo "=== 本次构建 APK md5 ==="
+            echo "=== 仓库 APK md5 ==="
+            git show origin/master:app-release.apk 2>/dev/null | md5sum | cut -d' ' -f1
+            echo "=== 本次构建 md5 ==="
             md5sum "$SRC" | cut -d' ' -f1
-            echo "=== git status ==="
-            git status --porcelain
-            echo "=== diff cached ==="
-            git diff --cached --stat
-          } > /tmp/gitinfo.txt 2>&1
-          if git diff --cached --quiet; then
-            echo "APK 内容无变化，跳过提交" >> /tmp/gitinfo.txt
-          else
-            git commit -m "apk: $HEAD_SHA [skip ci]" >> /tmp/gitinfo.txt 2>&1
-            # 显式带 token 的 remote：默认的 origin 在 workflow 里 push 会静默失败
-            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
-            # 前面的步骤用 API 提交过 buildlog，远程已有新 commit，直接 push 会被拒
-            git fetch origin master >> /tmp/gitinfo.txt 2>&1
-            git rebase origin/master >> /tmp/gitinfo.txt 2>&1
-            echo "rebase_exit=$?" >> /tmp/gitinfo.txt
-            git push origin HEAD:master >> /tmp/gitinfo.txt 2>&1
-            echo "push_exit=$?" >> /tmp/gitinfo.txt
-          fi
-          cat /tmp/gitinfo.txt
-          # 小文件用 contents API 提交，方便外部核对（大 APK 走上面的 git push）
-          B64F=$(base64 -w 0 /tmp/gitinfo.txt)
-          SHAF=$(curl -sS -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/gitlog.txt" | jq -r '.sha // empty')
-          if [ -n "$SHAF" ]; then
-            JSONF=$(jq -n --arg c "$B64F" --arg s "$SHAF" '{message:"gitlog",content:$c,sha:$s}')
-          else
-            JSONF=$(jq -n --arg c "$B64F" '{message:"gitlog",content:$c}')
-          fi
-          curl -sS -X PUT -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/gitlog.txt" -d "$JSONF" | head -c 200
-          echo ""
+            echo "=== gitinfo ==="
+          } > /tmp/head.txt 2>&1
+          cat /tmp/head.txt /tmp/gitinfo.txt > /tmp/gitall.txt
           echo "仓库内 md5: $(md5sum app-release.apk | cut -d' ' -f1)"
