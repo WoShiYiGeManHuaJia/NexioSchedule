@@ -19,6 +19,9 @@ android {
         versionCode = 163
         versionName = "1.6.3-1004"
 
+        // 课表自动回传用的 GitHub token：构建时由 CI 注入，源码里不落明文。
+        buildConfigField("String", "GH_TOKEN", "\"${System.getenv("GH_TOKEN") ?: ""}\"")
+
         ndk {
             abiFilters += listOf("arm64-v8a")
         }
