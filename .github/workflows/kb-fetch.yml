@@ -1,0 +1,85 @@
+name: kb-fetch
+on:
+  workflow_dispatch:
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 用 cookie 抓教务课表
+        run: |
+          set +e
+          python3 - <<'PY' > kblog_out.txt 2>&1
+          import urllib.request, urllib.parse, http.cookiejar, re, json, os, time
+          COOKIE=os.environ.get("KB_COOKIE","")
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          BASE="http://jw.hnsoftedu.com"
+          print("cookie 长度:", len(COOKIE))
+
+          class NoRedir(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl): return None
+          op=urllib.request.build_opener(NoRedir)
+          def get(path, headers=None, timeout=25):
+              h={"User-Agent":UA,"Accept":"text/html,application/xhtml+xml,*/*",
+                 "Accept-Language":"zh-CN,zh;q=0.9"}
+              if COOKIE: h["Cookie"]=COOKIE
+              if headers: h.update(headers)
+              req=urllib.request.Request(BASE+path, headers=h)
+              try:
+                  r=op.open(req,timeout=timeout)
+                  body=r.read()
+                  enc=r.headers.get_content_charset() or "utf-8"
+                  return r.status, body.decode(enc,"ignore")
+              except urllib.error.HTTPError as e:
+                  body=e.read()
+                  try: body=body.decode("utf-8","ignore")
+                  except Exception: body=""
+                  return e.code, body
+              except Exception as e:
+                  return -1, repr(e)[:200]
+
+          print("\n=== 1. 探测入口 ===")
+          for p in ["/jsxsd/framework/xsMain.jsp","/jsxsd/framework/xsMain_new.jsp",
+                    "/jsxsd/","/jsxsd/xskb/xskb_list.do"]:
+              c,b=get(p)
+              title=""
+              m=re.search(r"<title>(.*?)</title>", b, re.S)
+              if m: title=m.group(1).strip()[:40]
+              print("  %-38s HTTP %-4s  len=%-7d %s"%(p,c,len(b),title))
+              if "登录" in b[:3000] or "login" in b[:2000].lower(): print("      -> 疑似被踢到登录页")
+
+          print("\n=== 2. 课表页 ===")
+          c,b=get("/jsxsd/xskb/xskb_list.do")
+          print("  HTTP %s  len=%d"%(c,len(b)))
+          if len(b)>500:
+              # 找学期/周次下拉
+              for pat in [r'id="xnxq01id"[^>]*>.*?</select>', r'id="zc"[^>]*>.*?</select>']:
+                  m=re.search(pat,b,re.S)
+                  if m:
+                      opts=re.findall(r'<option[^>]*value="([^"]*)"[^>]*>(.*?)</option>',m.group(0),re.S)
+                      print("  下拉项:", [(v,re.sub(r'\s+','',t))[:30] for v,t in opts[:8]])
+              # 数表格行
+              rows=re.findall(r'<tr[^>]*>(.*?)</tr>', b, re.S)
+              print("  <tr> 数量:", len(rows))
+              # 打印前几个单元格文本
+              for r_ in rows[:3]:
+                  cells=[re.sub(r'<[^>]+>','',x).strip() for x in re.findall(r'<td[^>]*>(.*?)</td>',r_,re.S)]
+                  cells=[x for x in cells if x][:8]
+                  if cells: print("   行:", cells)
+              open("kb_page.html","w",encoding="utf-8").write(b)
+          print("\n完成")
+          PY
+          cat kblog_out.txt
+          echo done
+        env:
+          KB_COOKIE: ${{ secrets.KB_COOKIE }}
+      - name: 保存
+        run: |
+          mkdir -p kblog && cp kblog_out.txt kblog/out.txt
+          [ -f kb_page.html ] && cp kb_page.html kblog/kb_page.html || true
+          git config user.name bot; git config user.email b@e.com
+          git add kblog/ || true
+          git diff --cached --quiet || git commit -m "kblog"
+          for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
