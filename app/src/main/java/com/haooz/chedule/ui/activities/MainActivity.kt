@@ -2325,7 +2325,11 @@ fun CourseScheduleApp(privacyConsented: Boolean = true) {
         courseIdToHide: String = courses.firstOrNull()?.id ?: "",
         targetWeek: Int = 0
     ) {
-        detailCourses = courses
+        // 只传本周有课的：另一个入口（课表页 bottom sheet）已在 MainScheduleScreen 里过滤过，
+        // 这里是今日页/课表页共用的全屏详情页入口，之前漏了，导致仍能看到「非本周」的旧条目。
+        // 本周一门都没有才回退全部，避免详情页空白。
+        val inWeek = courses.filter { it.isActiveInWeek(targetWeek) }
+        detailCourses = inWeek.ifEmpty { courses }
         detailCardLeft = cardLeft
         detailCardTop = cardTop
         detailCardWidth = cardWidth
