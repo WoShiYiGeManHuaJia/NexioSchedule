@@ -65,6 +65,11 @@ object DirectKebiaoFetcher {
         )
     }
 
+    /** 教务网页 Cookie 转发到 JwKebiaoFetcher 的存储，方便 UI 统一读写。 */
+    fun loadJwCookie(context: Context): String = JwKebiaoFetcher.loadCookie(context)
+
+    fun saveJwCookie(context: Context, c: String) = JwKebiaoFetcher.saveCookie(context, c)
+
     fun saveCredential(context: Context, c: Credential) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString(K_USER, c.userNo.trim())
