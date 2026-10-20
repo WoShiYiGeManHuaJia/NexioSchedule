@@ -1,80 +1,41 @@
-commit: 24b3f59
+commit: 0ebe68a
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
-(无)
+total 3.2M
+-rw-r--r-- 1 runner runner 3.2M Oct 20 01:42 app-release.apk
+drwxr-xr-x 4 runner runner 4.0K Oct 20 01:42 baselineProfiles
+-rw-r--r-- 1 runner runner  714 Oct 20 01:42 output-metadata.json
 --- 编译错误 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:72:78 Unresolved reference 'e'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:75:81 Unresolved reference 'e'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:77:14 Syntax error: Expecting 'catch' or 'finally'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:78:28 Unresolved reference 'pair'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:79:23 Unresolved reference 'pair'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:82:30 Unresolved reference 'optJSONObject'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:114:51 Unresolved reference 'length'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:115:45 Unresolved reference 'optInt'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:11 Unresolved reference 'catch'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:18 Unresolved reference 'e'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:19 Syntax error: Expecting ')'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:19 Syntax error: Expecting member declaration.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:21 Syntax error: Expecting member declaration.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:30 Syntax error: Expecting member declaration.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:32 Syntax error: Expecting member declaration.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:32 Function declaration must have a name.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:42 Unresolved reference 'e'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:55 Unresolved reference 'e'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:57 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:57 'val <T : Any> KClass<T>.javaClass: Class<KClass<T>>' is deprecated. Use 'java' property to get Java class corresponding to this Kotlin class or cast this instance to Any if you really want to get the runtime Java class of this implementation of KClass.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:256:1 Syntax error: Expecting a top level declaration.
-FAILURE: Build failed with an exception.
-BUILD FAILED in 2m 27s
+BUILD SUCCESSFUL in 5m 42s
 --- build.log 尾部 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:21 Syntax error: Expecting member declaration.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:30 Syntax error: Expecting member declaration.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:32 Syntax error: Expecting member declaration.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:203:32 Function declaration must have a name.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:42 Unresolved reference 'e'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:55 Unresolved reference 'e'.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:57 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:204:57 'val <T : Any> KClass<T>.javaClass: Class<KClass<T>>' is deprecated. Use 'java' property to get Java class corresponding to this Kotlin class or cast this instance to Any if you really want to get the runtime Java class of this implementation of KClass.
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/BuiltinCourseSync.kt:256:1 Syntax error: Expecting a top level declaration.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:35 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/DrawBackdropModifier.kt:508:79 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LayoutCoordinates'.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/internal/Paint.kt:9:10 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
+w: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/kyant/backdrop/internal/Paint.kt:15:10 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
 
-> Task :app:compileReleaseKotlin FAILED
+> Task :app:processReleaseJavaRes
+> Task :app:mergeReleaseJavaResource
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:mergeReleaseGeneratedProguardFiles
+> Task :app:expandReleaseArtProfileWildcards
+> Task :app:generateReleaseLintVitalReportModel
+> Task :app:produceReleaseComposeMapping
+> Task :app:reportReleaseComposeMappingErrors
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:minifyReleaseWithR8
+> Task :app:convertShrunkResourcesToBinaryRelease
+> Task :app:optimizeReleaseResources
+> Task :app:mergeReleaseComposeMapping
+> Task :app:compileReleaseArtProfile
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+> Task :app:packageRelease
+> Task :app:assembleRelease
+> Task :app:createReleaseApkListingFileRedirect
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com.android.internal.application').
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 2m 27s
-36 actionable tasks: 36 executed
+BUILD SUCCESSFUL in 5m 42s
+54 actionable tasks: 54 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
-> Task :app:compileDebugKotlin FAILED
-
-[Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 1m 51s
-32 actionable tasks: 24 executed, 8 from cache
-Configuration cache entry stored.
