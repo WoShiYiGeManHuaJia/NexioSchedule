@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches: [master]
+    paths-ignore:
+      - 'app-release.apk'
+      - 'buildlog/**'
 
 permissions:
   contents: write
@@ -182,27 +185,18 @@ jobs:
             echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           } > buildlog/fingerprint.txt
           cat buildlog/fingerprint.txt
-          # 直接把本次构建的 APK 提交到仓库根，外部固定链接（jsDelivr/Pages）指向的就是这一份
-          B64=$(base64 -w 0 "$SRC")
-          SHA=$(curl -sS -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/app-release.apk" | jq -r '.sha // empty')
-          if [ -n "$SHA" ]; then
-            JSON=$(jq -n --arg c "$B64" --arg s "$SHA" --arg m "apk: $HEAD_SHA" '{message:$m,content:$c,sha:$s}')
+          # 用 git 命令行提交：contents API 对 >1MB 文件会静默失败（3.3MB 必失败），
+          # 之前就是它导致仓库里的 app-release.apk 一直是旧包。
+          # [skip ci] + workflow 的 paths-ignore 双保险，避免这次提交再触发构建。
+          cp "$SRC" app-release.apk
+          git config user.name "apk-bot"
+          git config user.email "apk-bot@users.noreply.github.com"
+          git add -f app-release.apk buildlog/fingerprint.txt
+          if git diff --cached --quiet; then
+            echo "APK 内容无变化，跳过提交"
           else
-            JSON=$(jq -n --arg c "$B64" --arg m "apk: $HEAD_SHA" '{message:$m,content:$c}')
+            git commit -m "apk: $HEAD_SHA [skip ci]"
+            git push origin HEAD:master
+            echo "已提交仓库根目录 app-release.apk"
           fi
-          curl -sS -X PUT -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/app-release.apk" -d "$JSON" | head -c 200
-          echo ""
-          # 指纹也提交，便于核对
-          B64F=$(base64 -w 0 buildlog/fingerprint.txt)
-          SHAF=$(curl -sS -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/fingerprint.txt" | jq -r '.sha // empty')
-          if [ -n "$SHAF" ]; then
-            JSONF=$(jq -n --arg c "$B64F" --arg s "$SHAF" '{message:"fingerprint",content:$c,sha:$s}')
-          else
-            JSONF=$(jq -n --arg c "$B64F" '{message:"fingerprint",content:$c}')
-          fi
-          curl -sS -X PUT -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/fingerprint.txt" -d "$JSONF" | head -c 200
-          echo ""
+          echo "仓库内 md5: $(md5sum app-release.apk | cut -d' ' -f1)"
