@@ -1041,7 +1041,13 @@ fun MainScheduleScreen(
                                             course.startSection,
                                             course.endSection
                                         )
-                                        selectedCourses = coursesAtSlot
+                                        // getCoursesAtSlot 的 week 参数并未参与过滤（只按星期+节次筛），
+                                        // 会把同一格子下所有周次段的课一起返回（含已结束/未开始的），
+                                        // 弹窗因此出现多条同名课、其中一条标「非本周」。
+                                        // 这里按该格当天实际显示的周次过滤，只留本周真正在上的。
+                                        selectedCourses = coursesAtSlot.filter {
+                                            it.isActiveInWeek(displayWeekForDay)
+                                        }
                                         selectedCourse = coursesAtSlot.find { it.id == course.id } ?: course
                                         showCourseDetail = true
                                         onPopupStateChange(true)
@@ -1364,9 +1370,9 @@ fun MainScheduleScreen(
             val scope = rememberCoroutineScope()
             val coursesToShow = remember(selectedCourses, selectedCourse, viewingWeek) {
                 val all = selectedCourses.ifEmpty { listOfNotNull(selectedCourse) }
-                // 只显示本周有课的；本周全都没课才回退显示全部，避免弹窗空白
+                // 只显示本周有课的，不再回退显示全部
                 val inWeek = all.filter { it.isActiveInWeek(viewingWeek) }
-                (inWeek.ifEmpty { all })
+                inWeek
                     .sortedWith(
                         compareByDescending<Course> { it.isActiveInWeek(viewingWeek) }
                             .thenBy {
