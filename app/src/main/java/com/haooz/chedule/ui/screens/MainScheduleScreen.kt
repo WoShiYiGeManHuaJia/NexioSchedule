@@ -1363,7 +1363,10 @@ fun MainScheduleScreen(
         val detailContent: @Composable () -> Unit = {
             val scope = rememberCoroutineScope()
             val coursesToShow = remember(selectedCourses, selectedCourse, viewingWeek) {
-                selectedCourses.ifEmpty { listOfNotNull(selectedCourse) }
+                val all = selectedCourses.ifEmpty { listOfNotNull(selectedCourse) }
+                // 只显示本周有课的；本周全都没课才回退显示全部，避免弹窗空白
+                val inWeek = all.filter { it.isActiveInWeek(viewingWeek) }
+                (inWeek.ifEmpty { all })
                     .sortedWith(
                         compareByDescending<Course> { it.isActiveInWeek(viewingWeek) }
                             .thenBy {
