@@ -20,6 +20,10 @@ object BuiltinCourseSync {
         val rawCount: Int = 0,
         val courseCount: Int = 0,
         val changed: Boolean = false,
+        /** 抓取到的原始 weeks_cache JSON，供自动回传使用；失败为 null */
+        val rawJson: String? = null,
+        /** 数据来源：教务直连 / GitHub 兜底 */
+        val source: String = "",
     )
 
     private val COLORS = longArrayOf(
@@ -184,6 +188,8 @@ object BuiltinCourseSync {
                 rawCount = rawCount,
                 courseCount = courses.size,
                 changed = changed,
+                rawJson = textSure,
+                source = src,
             )
         } catch (e: Exception) {
             SyncResult(false, "刷新失败：" + (e.message ?: e.javaClass.simpleName))
