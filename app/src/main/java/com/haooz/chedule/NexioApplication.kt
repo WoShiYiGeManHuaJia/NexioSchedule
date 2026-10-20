@@ -31,6 +31,9 @@ class NexioApplication : Application() {
         warmUpSharedPreferences()
         cleanupTransientFiles()
         initWearableSync()
+        // 启动即静默同步一次最新课表（内部节流 20 分钟）。
+        // 用户不需要点刷新：抓到就写本地，界面直接是最新；同时回传供服务端/重装使用。
+        com.haooz.chedule.data.AutoKebiaoSync.kick(this)
     }
 
     /** 手表课表推送：启动注册，课程变更走 CourseRepository 监听 */
