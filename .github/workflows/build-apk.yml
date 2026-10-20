@@ -105,17 +105,11 @@ jobs:
           # 自检：确认 out/ 里是本次新构建（含最新构建号），不是仓库里的旧包
           for f in out/*.apk; do
             [ -e "$f" ] || continue
-            TAG=$(python3 - "$f" <<'PYX'
-import zipfile,sys,re
-try:
-    z=zipfile.ZipFile(sys.argv[1]); d=z.read('classes.dex')
-    m=set(re.findall(rb'2026[01][0-9][0-3][0-9]-[0-9]', d))
-    print(sorted(x.decode() for x in m))
-except Exception as e: print('读取失败',e)
-PYX
-)
-            echo "$f 内含构建号: $TAG"
             echo "$f md5: $(md5sum "$f" | cut -d' ' -f1)"
+            echo -n "$f 内含构建号: "
+            unzip -p "$f" classes.dex > /tmp/dex.bin 2>/dev/null || true
+            strings /tmp/dex.bin 2>/dev/null | grep -oE "2026[0-9]{4}-[0-9]" | sort -u | tr '\n' ' '
+            echo ""
           done
 
       - name: Upload build diagnostics
