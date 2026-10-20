@@ -1,0 +1,94 @@
+name: deploy-kebiao-worker
+on:
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 部署 Worker 并实拉课表
+        run: |
+          set +e
+          python3 - <<'PY' > wlog_out.txt 2>&1
+          import urllib.request, json, base64, os, time
+          TOK=os.environ["CF_API_TOKEN"]; ACC=os.environ["CF_ACCOUNT_ID"]
+          NAME="kebiao"; SUB="wispy-hill-817a"
+          H={"Authorization":"Bearer "+TOK,"User-Agent":"x"}
+          print("=== 1. 校验 token ===")
+          try:
+              d=json.load(urllib.request.urlopen(urllib.request.Request(
+                  "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts"%ACC,headers=H),timeout=60))
+              print("   success=%s  现有 scripts=%s"%(d.get("success"),
+                    [s.get("id") for s in d.get("result",[])]))
+          except Exception as e:
+              print("   失败",repr(e)[:200]); raise SystemExit(1)
+
+          print("\n=== 2. 上传 Worker 脚本 ===")
+          src=open("kbworker/worker.js","rb").read()
+          meta=json.dumps({"main_module":"worker.js","bindings":[
+              {"type":"plain_text","name":"KEBIAO_USER_NO","text":"202405190231"},
+              {"type":"plain_text","name":"KEBIAO_PWD_ENC","text":os.environ["KEBIAO_PWD_ENC"]},
+              {"type":"plain_text","name":"KEBIAO_SCHOOL_CODE","text":"4711"},
+          ],"compatibility_date":"2024-11-01"}).encode()
+          body=b"--b\r\n"+b'Content-Disposition: form-data; name="metadata"; filename="metadata"\r\n'+\
+               b"Content-Type: application/json\r\n\r\n"+meta+b"\r\n"+\
+               b"--b\r\n"+b'Content-Disposition: form-data; name="worker.js"; filename="worker.js"\r\n'+\
+               b"Content-Type: application/javascript\r\n\r\n"+src+b"\r\n--b--\r\n"
+          r=urllib.request.Request(
+              "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts/%s"%(ACC,NAME),
+              data=body, method="PUT",
+              headers={**H,"Content-Type":"multipart/form-data; boundary=b"})
+          try:
+              d=json.load(urllib.request.urlopen(r,timeout=180))
+              print("   success=%s"%(d.get("success")))
+              if not d.get("success"): print("   errors:",json.dumps(d.get("errors"))[:400])
+          except Exception as e:
+              print("   失败",repr(e)[:300]); raise SystemExit(1)
+
+          print("\n=== 3. 绑定 workers.dev 子域 ===")
+          r=urllib.request.Request(
+              "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts/%s/subdomain"%(ACC,NAME),
+              data=json.dumps({"enabled":True}).encode(), method="POST",
+              headers={**H,"Content-Type":"application/json"})
+          try:
+              d=json.load(urllib.request.urlopen(r,timeout=120)); print("   success=%s"%(d.get("success")))
+          except Exception as e: print("   ",str(e)[:150])
+
+          print("\n=== 4. 实拉课表 ===")
+          url="https://%s.%s.workers.dev/"%(NAME,SUB)
+          for attempt in range(4):
+              try:
+                  req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0"})
+                  t=time.time()
+                  txt=urllib.request.urlopen(req,timeout=120).read().decode("utf-8","ignore")
+                  print("   第%d次: %.0fms  %d 字节"%(attempt+1,(time.time()-t)*1000,len(txt)))
+                  j=json.loads(txt)
+                  print("   ok=%s step=%s"%(j.get("ok"),j.get("step")))
+                  if j.get("ok"):
+                      wk=j["weeks"]; tot=sum(len(v) for v in wk.values())
+                      print("   周次数=%d 总条目=%d 学期=%s 当前周=%s"%(len(wk),tot,j.get("semester"),j.get("current_week")))
+                      open("weeks_cache.json","w",encoding="utf-8").write(json.dumps(j,ensure_ascii=False))
+                      print("   已写入 weeks_cache.json")
+                      break
+                  else:
+                      print("   返回:",json.dumps(j)[:400])
+                      break
+              except Exception as e:
+                  print("   第%d次失败 %s"%(attempt+1,repr(e)[:120])); time.sleep(12)
+          PY
+          cat wlog_out.txt
+          echo done
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          KEBIAO_PWD_ENC: ${{ secrets.KEBIAO_PWD_ENC }}
+      - name: 提交课表与日志
+        run: |
+          mkdir -p wlog && cp wlog_out.txt wlog/out.txt
+          git config user.name bot; git config user.email b@e.com
+          git add wlog/ kbworker/ || true
+          [ -f weeks_cache.json ] && git add weeks_cache.json
+          git diff --cached --quiet || git commit -m "worker: 部署并拉取最新课表"
+          for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
