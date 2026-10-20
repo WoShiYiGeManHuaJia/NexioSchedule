@@ -52,8 +52,17 @@ object BuiltinCourseSync {
             // 不能先声明 val 再在 try 里赋值——Kotlin 不允许在 try 块内给外部 val 赋值
             // （'val' cannot be reassigned），那样编译不过。
             val pair: Pair<String, String> = try {
-                DirectKebiaoFetcher.fetchAsWeeksCacheJson(context) to "教务直连"
+                // 首选：抓教务 /jsxsd 课表页（与浏览器实际访问的一致，含调课后的分段周次）。
+                // 老的 :81 JSON 接口实测登录必超时、且数据与网页不符，已降到次选。
+                JwKebiaoFetcher.fetchAsWeeksCacheJson(context) to "教务网页直连"
             } catch (e: Exception) {
+                val eJw = e
+                try {
+                    DirectKebiaoFetcher.fetchAsWeeksCacheJson(context) to "教务直连"
+                } catch (e2: Exception) {
+                    throw eJw
+                }
+            }
                 // 直连失败时是否回落 GitHub，取决于本地有没有课表：
                 //  - 本地已有课表：绝不覆盖，直接报真实错误。
                 //    兜底源更新频率低于教务，拿旧数据盖掉在用的课表比不刷新更有害。
@@ -202,9 +211,11 @@ object BuiltinCourseSync {
      * 再走 GitHub Pages，最后才是 raw。任一源拿到有效数据就停。
      */
     private val GH_SOURCES = listOf(
-        "https://cdn.jsdelivr.net/gh/WoShiYiGeManHuaJia/kebiao-page@main/weeks_cache.json",
-        "https://woshiyigemanhuajia.github.io/kebiao-page/weeks_cache.json",
-        "https://raw.githubusercontent.com/WoShiYiGeManHuaJia/kebiao-page/main/weeks_cache.json",
+        // kebiao-page 是私有库，jsDelivr / raw 都读不到（App 一直拿不到兜底数据的原因）。
+        // 改读公开库 NexioSchedule，由 kb-sync 定时把教务课表推到这里。
+        "https://cdn.jsdelivr.net/gh/WoShiYiGeManHuaJia/NexioSchedule@master/weeks_cache.json",
+        "https://fastly.jsdelivr.net/gh/WoShiYiGeManHuaJia/NexioSchedule@master/weeks_cache.json",
+        "https://raw.githubusercontent.com/WoShiYiGeManHuaJia/NexioSchedule/master/weeks_cache.json",
     )
 
     private fun fetchFromGithub(): String? {
