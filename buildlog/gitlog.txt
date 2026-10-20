@@ -1,3 +1,7 @@
+=== 仓库现有 APK md5 ===
+885dff5ca09533fa0184ac2c4d5441ae
+=== 本次构建 APK md5 ===
+885dff5ca09533fa0184ac2c4d5441ae
 === git status ===
 M  buildlog/fingerprint.txt
  M buildlog/out.txt
@@ -6,14 +10,19 @@ M  buildlog/fingerprint.txt
 === diff cached ===
  buildlog/fingerprint.txt | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
-[master 6e88f71] apk: 3fe9180 [skip ci]
+[master 3829ef9] apk: 81a5fa9 [skip ci]
  1 file changed, 2 insertions(+), 2 deletions(-)
+From https://github.com/WoShiYiGeManHuaJia/NexioSchedule
+ * branch            master     -> FETCH_HEAD
+   81a5fa9..656feb7  master     -> origin/master
+error: cannot rebase: You have unstaged changes.
+error: Please commit or stash them.
+rebase_exit=1
 To https://github.com/WoShiYiGeManHuaJia/NexioSchedule.git
- ! [rejected]        HEAD -> master (fetch first)
+ ! [rejected]        HEAD -> master (non-fast-forward)
 error: failed to push some refs to 'https://github.com/WoShiYiGeManHuaJia/NexioSchedule.git'
-hint: Updates were rejected because the remote contains work that you do not
-hint: have locally. This is usually caused by another repository pushing to
-hint: the same ref. If you want to integrate the remote changes, use
-hint: 'git pull' before pushing again.
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
 hint: See the 'Note about fast-forwards' in 'git push --help' for details.
 push_exit=1
