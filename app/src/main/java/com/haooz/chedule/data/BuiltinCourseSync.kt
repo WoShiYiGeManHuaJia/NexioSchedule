@@ -52,28 +52,25 @@ object BuiltinCourseSync {
             // 不能先声明 val 再在 try 里赋值——Kotlin 不允许在 try 块内给外部 val 赋值
             // （'val' cannot be reassigned），那样编译不过。
             val pair: Pair<String, String> = try {
-                // 首选：抓教务 /jsxsd 课表页（与浏览器实际访问的一致，含调课后的分段周次）。
-                // 老的 :81 JSON 接口实测登录必超时、且数据与网页不符，已降到次选。
+                // 首选：抓教务 /jsxsd 课表页（与浏览器实际访问一致，含调课后的分段周次）。
+                // 老的 :81 JSON 接口实测登录必超时、且数据与网页不符，降为次选。
                 JwKebiaoFetcher.fetchAsWeeksCacheJson(context) to "教务网页直连"
-            } catch (e: Exception) {
-                val eJw = e
+            } catch (eJw: Exception) {
                 try {
                     DirectKebiaoFetcher.fetchAsWeeksCacheJson(context) to "教务直连"
-                } catch (e2: Exception) {
-                    throw eJw
+                } catch (e: Exception) {
+                    // 两种直连都失败时是否回落 GitHub，取决于本地有没有课表：
+                    //  - 本地已有课表：绝不覆盖，直接报真实错误。
+                    //    兜底源更新频率低于教务，拿旧数据盖掉在用的课表比不刷新更有害。
+                    //  - 本地为空（全新安装 / 清过数据）：回落 GitHub，先让课表有内容可用。
+                    val repoNow = CourseRepository.getInstance(context.applicationContext)
+                    if (repoNow.getAllCourses().isNotEmpty()) {
+                        return@withContext SyncResult(false, failReport(context, eJw))
+                    }
+                    val gh = fetchFromGithub()
+                        ?: return@withContext SyncResult(false, failReport(context, eJw))
+                    gh to "GitHub 兜底"
                 }
-            }
-                // 直连失败时是否回落 GitHub，取决于本地有没有课表：
-                //  - 本地已有课表：绝不覆盖，直接报真实错误。
-                //    兜底源更新频率低于教务，拿旧数据盖掉在用的课表比不刷新更有害。
-                //  - 本地为空（全新安装 / 清过数据）：回落 GitHub，先让课表有内容可用。
-                val repoNow = CourseRepository.getInstance(context.applicationContext)
-                if (repoNow.getAllCourses().isNotEmpty()) {
-                    return@withContext SyncResult(false, failReport(context, e))
-                }
-                val gh = fetchFromGithub()
-                    ?: return@withContext SyncResult(false, failReport(context, e))
-                gh to "GitHub 兜底"
             }
             val textSure = pair.first
             val src = pair.second
