@@ -92,8 +92,31 @@ jobs:
         if: always()
         run: |
           mkdir -p out
-          find . -path ./out -prune -o -name "*.apk" -type f -print 2>/dev/null | while read f; do cp "$f" "out/$(basename "$f")"; done
+          # 不能用 find 全局搜：仓库根目录也提交了一份 app-release.apk（供国内下载），
+          # 它与构建产物同名，cp 到 out/ 时会互相覆盖，谁后写谁赢，
+          # 结果每次发出去的一直是仓库里那份旧包（构建号永远停在 20261020-2）。
+          # 现在只从构建产物目录取。
+          for f in app/build/outputs/apk/release/app-release.apk \
+                   app/build/outputs/apk/debug/app-debug.apk; do
+            [ -e "$f" ] || continue
+            cp "$f" "out/$(basename "$f")"
+          done
           ls -lh out/ || echo "无 APK"
+          # 自检：确认 out/ 里是本次新构建（含最新构建号），不是仓库里的旧包
+          for f in out/*.apk; do
+            [ -e "$f" ] || continue
+            TAG=$(python3 - "$f" <<'PYX'
+import zipfile,sys,re
+try:
+    z=zipfile.ZipFile(sys.argv[1]); d=z.read('classes.dex')
+    m=set(re.findall(rb'2026[01][0-9][0-3][0-9]-[0-9]', d))
+    print(sorted(x.decode() for x in m))
+except Exception as e: print('读取失败',e)
+PYX
+)
+            echo "$f 内含构建号: $TAG"
+            echo "$f md5: $(md5sum "$f" | cut -d' ' -f1)"
+          done
 
       - name: Upload build diagnostics
         if: always()
