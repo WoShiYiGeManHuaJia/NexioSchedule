@@ -13,17 +13,29 @@ jobs:
           set +e
           python3 - <<'PY' > wlog_out.txt 2>&1
           import urllib.request, json, base64, os, time
-          TOK=os.environ["CF_API_TOKEN"]; ACC=os.environ["CF_ACCOUNT_ID"]
+          ACC=os.environ["CF_ACCOUNT_ID"]
+          # 依次尝试可用 token：部分 token 只有读权限，上传会被 403
+          TOKS=[os.environ.get("CF_API_TOKEN_FULL",""),
+                os.environ.get("CF_API_TOKEN_TOTAL",""),
+                os.environ.get("CF_API_TOKEN","")]
+          TOKS=[t for t in TOKS if t.strip()]
+          print("待试 token 数:",len(TOKS))
+          TOK=None
           NAME="kebiao"; SUB="wispy-hill-817a"
           H={"Authorization":"Bearer "+TOK,"User-Agent":"x"}
-          print("=== 1. 校验 token ===")
-          try:
-              d=json.load(urllib.request.urlopen(urllib.request.Request(
-                  "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts"%ACC,headers=H),timeout=60))
-              print("   success=%s  现有 scripts=%s"%(d.get("success"),
-                    [s.get("id") for s in d.get("result",[])]))
-          except Exception as e:
-              print("   失败",repr(e)[:200]); raise SystemExit(1)
+          print("=== 1. 探测可用 token ===")
+          for i,t in enumerate(TOKS):
+              H={"Authorization":"Bearer "+t,"User-Agent":"x"}
+              try:
+                  d=json.load(urllib.request.urlopen(urllib.request.Request(
+                      "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts"%ACC,headers=H),timeout=60))
+                  print("   token#%d 读=%s"%(i,d.get("success")))
+                  if d.get("success"): TOK=t; break
+              except Exception as e:
+                  print("   token#%d 失败 %s"%(i,repr(e)[:80]))
+          if not TOK:
+              print("   无可用 token"); raise SystemExit(1)
+          H={"Authorization":"Bearer "+TOK,"User-Agent":"x"}
 
           print("\n=== 2. 上传 Worker 脚本 ===")
           src=open("kbworker/worker.js","rb").read()
@@ -40,12 +52,22 @@ jobs:
               "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts/%s"%(ACC,NAME),
               data=body, method="PUT",
               headers={**H,"Content-Type":"multipart/form-data; boundary=b"})
-          try:
-              d=json.load(urllib.request.urlopen(r,timeout=180))
-              print("   success=%s"%(d.get("success")))
-              if not d.get("success"): print("   errors:",json.dumps(d.get("errors"))[:400])
-          except Exception as e:
-              print("   失败",repr(e)[:300]); raise SystemExit(1)
+          okup=False
+          for i,t in enumerate(TOKS):
+              HH={"Authorization":"Bearer "+t,"User-Agent":"x","Content-Type":"multipart/form-data; boundary=b"}
+              rr=urllib.request.Request(
+                  "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts/%s"%(ACC,NAME),
+                  data=body, method="PUT", headers=HH)
+              try:
+                  d=json.load(urllib.request.urlopen(rr,timeout=180))
+                  if d.get("success"):
+                      print("   token#%d 上传成功"%i); okup=True; H=HH; break
+                  else:
+                      print("   token#%d 失败 %s"%(i,json.dumps(d.get("errors"))[:200]))
+              except Exception as e:
+                  print("   token#%d 异常 %s"%(i,repr(e)[:100]))
+          if not okup:
+              print("   所有 token 均无上传权限"); raise SystemExit(1)
 
           print("\n=== 3. 绑定 workers.dev 子域 ===")
           r=urllib.request.Request(
@@ -82,6 +104,8 @@ jobs:
           echo done
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_API_TOKEN_FULL: ${{ secrets.CF_API_TOKEN_FULL }}
+          CF_API_TOKEN_TOTAL: ${{ secrets.CF_API_TOKEN_TOTAL }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           KEBIAO_PWD_ENC: ${{ secrets.KEBIAO_PWD_ENC }}
       - name: 提交课表与日志
