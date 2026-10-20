@@ -60,6 +60,7 @@ private fun KebiaoDiagScreen(onBack: () -> Unit) {
     var userNo by remember { mutableStateOf(cred.userNo) }
     var pwd by remember { mutableStateOf(cred.pwdEnc) }
     var sch by remember { mutableStateOf(cred.schoolCode) }
+    var cookie by remember { mutableStateOf(DirectKebiaoFetcher.loadJwCookie(context)) }
     var report by remember { mutableStateOf("点下方按钮开始。") }
     var busy by remember { mutableStateOf(false) }
     var last by remember {
@@ -87,7 +88,7 @@ private fun KebiaoDiagScreen(onBack: () -> Unit) {
             modifier = Modifier.padding(bottom = 4.dp),
         )
         Text(
-            text = "构建 ${DirectKebiaoFetcher.BUILD_TAG} · App 直接请求教务接口，不经过任何外国服务器",
+            text = "构建 ${DirectKebiaoFetcher.BUILD_TAG} · App 直连 jw.hnsoftedu.com，不经过任何外国服务器",
             fontSize = 12.sp,
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
             modifier = Modifier.padding(bottom = 12.dp),
@@ -119,6 +120,13 @@ private fun KebiaoDiagScreen(onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     singleLine = true,
                 )
+                OutlinedTextField(
+                    value = cookie,
+                    onValueChange = { cookie = it },
+                    label = { Text("教务 Cookie（JSESSIONID=...）") },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    singleLine = true,
+                )
 
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
                     TextButton(
@@ -131,6 +139,7 @@ private fun KebiaoDiagScreen(onBack: () -> Unit) {
                                 context,
                                 DirectKebiaoFetcher.Credential(userNo, pwd, sch),
                             )
+                            DirectKebiaoFetcher.saveJwCookie(context, cookie)
                             scope.launch {
                                 val r = withContext(Dispatchers.IO) {
                                     runCatching { AutoKebiaoSync.force(context) }
