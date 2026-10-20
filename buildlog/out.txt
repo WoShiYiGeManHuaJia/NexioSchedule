@@ -1,21 +1,21 @@
-commit: db1b88a
+commit: 140d0df
 gradle_exit: gradle_exit=0
 --- apk 输出目录 ---
 (无)
 --- 编译错误 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/NexioApplication.kt:36:32 Unresolved reference 'AutoKebiaoSync'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/AutoKebiaoSync.kt:110:21 Unresolved reference 'BuildConfig'.
 FAILURE: Build failed with an exception.
-BUILD FAILED in 2m 33s
+BUILD FAILED in 2m 29s
 --- build.log 尾部 ---
 > Task :app:validateSigningRelease
 > Task :app:writeReleaseAppMetadata
 > Task :app:writeReleaseSigningConfigVersions
-> Task :app:processReleaseManifest
-> Task :app:processReleaseManifestForPackage
+> Task :app:collectReleaseDependencies
+> Task :app:sdkReleaseDependencyData
 > Task :app:mergeReleaseResources
 > Task :app:processReleaseResources
 > Task :app:compileReleaseKotlin
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/NexioApplication.kt:36:32 Unresolved reference 'AutoKebiaoSync'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/AutoKebiaoSync.kt:110:21 Unresolved reference 'BuildConfig'.
 
 > Task :app:compileReleaseKotlin FAILED
 
@@ -34,11 +34,11 @@ Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'com
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 33s
+BUILD FAILED in 2m 29s
 36 actionable tasks: 36 executed
 Configuration cache entry stored.
 --- debug 回退日志尾部 ---
-e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/NexioApplication.kt:36:32 Unresolved reference 'AutoKebiaoSync'.
+e: file:///home/runner/work/NexioSchedule/NexioSchedule/app/src/main/java/com/haooz/chedule/data/AutoKebiaoSync.kt:110:21 Unresolved reference 'BuildConfig'.
 
 [Incubating] Problems report is available at: file:///home/runner/work/NexioSchedule/NexioSchedule/build/reports/problems/problems-report.html
 
@@ -55,6 +55,6 @@ Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.a
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 53s
+BUILD FAILED in 1m 49s
 32 actionable tasks: 24 executed, 8 from cache
 Configuration cache entry stored.
