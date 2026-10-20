@@ -1,0 +1,19 @@
+=== git status ===
+M  buildlog/fingerprint.txt
+ M buildlog/out.txt
+ M gradlew
+?? out/
+=== diff cached ===
+ buildlog/fingerprint.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+[master 6e88f71] apk: 3fe9180 [skip ci]
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+To https://github.com/WoShiYiGeManHuaJia/NexioSchedule.git
+ ! [rejected]        HEAD -> master (fetch first)
+error: failed to push some refs to 'https://github.com/WoShiYiGeManHuaJia/NexioSchedule.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+push_exit=1
