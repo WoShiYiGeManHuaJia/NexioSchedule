@@ -24,7 +24,7 @@ object DirectKebiaoFetcher {
      * 目的很直接——让用户点刷新时能从弹窗里立刻看出装的是不是新包，
      * 不用靠文件大小、更新时间这些容易被缓存骗过去的间接线索。
      */
-    const val BUILD_TAG = "20261020-7"
+    const val BUILD_TAG = "20261020-8"
 
     private const val BASE = "http://222.243.161.213:81/hnrjzyxyhd"
 
