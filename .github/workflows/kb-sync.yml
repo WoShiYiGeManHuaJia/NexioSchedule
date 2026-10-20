@@ -102,18 +102,20 @@ jobs:
                 sum(len(v) for v in weeks.values())))
           open("weeks_cache.json","w",encoding="utf-8").write(txt_out)
 
-          print("\n=== 4. 推送到 kebiao-page ===")
-          R2="WoShiYiGeManHuaJia/kebiao-page"
+          print("\n=== 4. 推送 ===")
+          # kebiao-page 是私有库，jsDelivr 读不到，所以数据放公开库 NexioSchedule，
+          # App 的兜底地址也同步改成读这里。
+          R2="WoShiYiGeManHuaJia/NexioSchedule"
           P="weeks_cache.json"
           q=urllib.parse.quote(P,safe='')
           sha=None
           try:
               d=json.load(urllib.request.urlopen(urllib.request.Request(
-                  'https://api.github.com/repos/%s/contents/%s?ref=main'%(R2,q),headers=H),timeout=120))
+                  'https://api.github.com/repos/%s/contents/%s?ref=master'%(R2,q),headers=H),timeout=120))
               sha=d.get('sha')
           except Exception: pass
           pl={"message":"课表更新 %s 第%s周（教务直抓 %d 条）"%(semester,current_week,len(items)),
-              "content":base64.b64encode(txt_out.encode()).decode(),"branch":"main"}
+              "content":base64.b64encode(txt_out.encode()).decode(),"branch":"master"}
           if sha: pl["sha"]=sha
           r=urllib.request.Request('https://api.github.com/repos/%s/contents/%s'%(R2,q),
               data=json.dumps(pl).encode(),method="PUT",headers=H)
