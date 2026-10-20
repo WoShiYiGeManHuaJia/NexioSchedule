@@ -56,7 +56,6 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          export GH_TOKEN="${{ secrets.KEBIAO_GH_TOKEN }}"
           ./gradlew assembleRelease --no-daemon > /tmp/build.log 2>&1
           echo "GRADLE_EXIT=$?" >> $GITHUB_OUTPUT
           echo "gradle_exit=$?" > /tmp/exit.txt
@@ -134,33 +133,76 @@ jobs:
         run: |
           set +e
           ls -lh out/
-          # 固定名 app-release.apk = 用户下载用的稳定入口，必须每次都是最新。
-          # 带时间戳的只作存档。
+          # 只保留一个固定文件名 app-release.apk。
+          # 之前用时间戳命名（NexioSchedule-20261020-0143.apk）并删掉 app-release.apk，
+          # 导致外部固定链接一直指向旧包，用户装完发现改动没生效。现在固定名字直接覆盖。
           TAG="builtin-latest"
-          NAME="NexioSchedule-$(date -u +%Y%m%d-%H%M).apk"
-          gh release view "$TAG" --repo ${{ github.repository }} > /dev/null 2>&1 || \
-            gh release create "$TAG" --repo ${{ github.repository }} --title "课表 APK" --notes "auto build"
-          # 固定名 app-release.apk 必须始终存在且始终是最新的：
-          # 用户拿的是固定下载链接，文件名一变链接就 404，
-          # 表现就是"我明明改了，他下的还是旧的/下不到"。
+          SRC=""
           for f in out/app-release.apk out/app-debug.apk; do
             [ -e "$f" ] || continue
-            echo "发布为 app-release.apk 大小 $(stat -c%s "$f") md5 $(md5sum "$f" | cut -d' ' -f1)"
-            cp "$f" out/app-release.apk
-            gh release upload "$TAG" out/app-release.apk --repo ${{ github.repository }} --clobber
-            break
+            SRC="$f"; break
           done
-          # 同时留一份带时间戳的存档，方便回溯；只保留最近 3 份，避免越堆越多
-          for f in out/app-release.apk; do
-            [ -e "$f" ] || continue
-            cp "$f" "out/$NAME"
-            gh release upload "$TAG" "out/$NAME" --repo ${{ github.repository }} --clobber
-          done
-          gh release view "$TAG" --repo ${{ github.repository }} --json assets -q '.assets[].name' \
-            | grep -E '^NexioSchedule-[0-9]{8}-[0-9]{4}\.apk$' | sort -r | tail -n +4 \
-            | while read -r oldname; do
-                echo "清理旧存档 $oldname"
-                gh release delete-asset "$TAG" "$oldname" --repo ${{ github.repository }} --yes 2>/dev/null || true
-              done
+          if [ -z "$SRC" ]; then echo "无 APK 可发布"; exit 0; fi
+          gh release view "$TAG" --repo ${{ github.repository }} > /dev/null 2>&1 || \
+            gh release create "$TAG" --repo ${{ github.repository }} --title "课表 APK" --notes "auto build"
+          echo "源文件 $SRC 大小 $(stat -c%s "$SRC")"
+          echo "md5    $(md5sum "$SRC" | cut -d' ' -f1)"
+          echo "sha256 $(sha256sum "$SRC" | cut -d' ' -f1)"
+          # 覆盖上传固定名
+          gh release upload "$TAG" "$SRC#app-release.apk" --repo ${{ github.repository }} --clobber
+          # 删掉历史遗留的时间戳命名，避免误下旧包
+          gh release view "$TAG" --repo ${{ github.repository }} --json assets -q '.assets[].name' | \
+            grep -E '^NexioSchedule-[0-9]{8}-[0-9]{4}\.apk$' | while read old; do
+              echo "删除旧资产 $old"
+              gh release delete-asset "$TAG" "$old" --repo ${{ github.repository }} --yes 2>/dev/null || true
+            done
           echo "--- release 现有文件 ---"
-          gh release view "$TAG" --repo ${{ github.repository }} --json assets -q '.assets[].name' || true
+          gh release view "$TAG" --repo ${{ github.repository }} --json assets -q '.assets[] | "name=\(.name\) size=\(.size\) updated=\(.updated_at\)"' || true
+
+      - name: Commit APK to repo root
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          SRC=""
+          for f in out/app-release.apk out/app-debug.apk; do
+            [ -e "$f" ] || continue
+            SRC="$f"; break
+          done
+          [ -n "$SRC" ] || { echo "无 APK"; exit 0; }
+          HEAD_SHA=$(git rev-parse --short HEAD)
+          APK_MD5=$(md5sum "$SRC" | cut -d' ' -f1)
+          echo "构建指纹: 源码=$HEAD_SHA md5=$APK_MD5"
+          {
+            echo "source_commit=$HEAD_SHA"
+            echo "apk_md5=$APK_MD5"
+            echo "apk_sha256=$(sha256sum "$SRC" | cut -d' ' -f1)"
+            echo "apk_size=$(stat -c%s "$SRC")"
+            echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > buildlog/fingerprint.txt
+          cat buildlog/fingerprint.txt
+          # 直接把本次构建的 APK 提交到仓库根，外部固定链接（jsDelivr/Pages）指向的就是这一份
+          B64=$(base64 -w 0 "$SRC")
+          SHA=$(curl -sS -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/app-release.apk" | jq -r '.sha // empty')
+          if [ -n "$SHA" ]; then
+            JSON=$(jq -n --arg c "$B64" --arg s "$SHA" --arg m "apk: $HEAD_SHA" '{message:$m,content:$c,sha:$s}')
+          else
+            JSON=$(jq -n --arg c "$B64" --arg m "apk: $HEAD_SHA" '{message:$m,content:$c}')
+          fi
+          curl -sS -X PUT -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/app-release.apk" -d "$JSON" | head -c 200
+          echo ""
+          # 指纹也提交，便于核对
+          B64F=$(base64 -w 0 buildlog/fingerprint.txt)
+          SHAF=$(curl -sS -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/fingerprint.txt" | jq -r '.sha // empty')
+          if [ -n "$SHAF" ]; then
+            JSONF=$(jq -n --arg c "$B64F" --arg s "$SHAF" '{message:"fingerprint",content:$c,sha:$s}')
+          else
+            JSONF=$(jq -n --arg c "$B64F" '{message:"fingerprint",content:$c}')
+          fi
+          curl -sS -X PUT -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/fingerprint.txt" -d "$JSONF" | head -c 200
+          echo ""
