@@ -10,11 +10,11 @@ M  buildlog/fingerprint.txt
 === diff cached ===
  buildlog/fingerprint.txt | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
-[master 3829ef9] apk: 81a5fa9 [skip ci]
+[master 461ac39] apk: 81a5fa9 [skip ci]
  1 file changed, 2 insertions(+), 2 deletions(-)
 From https://github.com/WoShiYiGeManHuaJia/NexioSchedule
  * branch            master     -> FETCH_HEAD
-   81a5fa9..656feb7  master     -> origin/master
+   81a5fa9..08445f2  master     -> origin/master
 error: cannot rebase: You have unstaged changes.
 error: Please commit or stash them.
 rebase_exit=1
