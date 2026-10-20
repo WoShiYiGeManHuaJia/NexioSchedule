@@ -2329,7 +2329,7 @@ fun CourseScheduleApp(privacyConsented: Boolean = true) {
         // 这里是今日页/课表页共用的全屏详情页入口，之前漏了，导致仍能看到「非本周」的旧条目。
         // 本周一门都没有才回退全部，避免详情页空白。
         val inWeek = courses.filter { it.isActiveInWeek(targetWeek) }
-        detailCourses = inWeek.ifEmpty { courses }
+        detailCourses = inWeek
         detailCardLeft = cardLeft
         detailCardTop = cardTop
         detailCardWidth = cardWidth
