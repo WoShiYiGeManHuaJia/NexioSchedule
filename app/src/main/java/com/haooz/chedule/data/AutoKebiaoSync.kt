@@ -1,6 +1,7 @@
 package com.haooz.chedule.data
 
 import android.content.Context
+import com.haooz.chedule.BuildConfig
 import android.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
