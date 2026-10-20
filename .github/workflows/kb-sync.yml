@@ -1,0 +1,139 @@
+name: kb-sync
+on:
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 抓教务课表并生成 weeks_cache.json
+        run: |
+          set +e
+          python3 - <<'PY' > kbsync_out.txt 2>&1
+          import urllib.request, urllib.parse, re, json, os, time, base64
+          COOKIE=os.environ.get("KB_COOKIE","")
+          TOK=os.environ.get("GH_TOKEN","")
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          BASE="http://jw.hnsoftedu.com"
+          H={"Authorization":"token "+TOK,"User-Agent":"x","Accept":"application/vnd.github+json"}
+
+          class NoRedir(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*a,**k): return None
+          op=urllib.request.build_opener(NoRedir)
+
+          print("=== 1. 抓课表页（全部周次）===")
+          req=urllib.request.Request(BASE+"/jsxsd/xskb/xskb_list.do",
+              headers={"User-Agent":UA,"Cookie":COOKIE,
+                       "Accept":"text/html,*/*","Accept-Language":"zh-CN,zh;q=0.9"})
+          try:
+              r=op.open(req,timeout=30); html=r.read().decode("utf-8","ignore")
+          except Exception as e:
+              print("失败",repr(e)[:200]); raise SystemExit(1)
+          print("  len=%d"%len(html))
+          if "timetable" not in html:
+              print("  未拿到课表表格，cookie 可能已失效"); raise SystemExit(1)
+
+          # 当前周次 / 学期
+          def sel(name):
+              m=re.search(r'id="%s"[^>]*>(.*?)</select>'%name, html, re.S)
+              if not m: return None,None
+              opts=re.findall(r'<option[^>]*value="([^"]*)"[^>]*?(selected)?[^>]*>(.*?)</option>', m.group(1), re.S)
+              cur=None
+              for v,s,t in opts:
+                  if s=='selected': cur=v
+              vals=[v for v,_,_ in opts if v]
+              return cur, vals
+          curweek,_=sel("zc")
+          cursem,semlist=sel("xnxq01id")
+          print("  当前周次=%s  学期=%s"%(curweek,cursem))
+          semester = cursem or (semlist[0] if semlist else "2026-2027-1")
+          current_week = int(curweek) if (curweek or '').isdigit() else 1
+
+          print("\n=== 2. 解析 ===")
+          m=re.search(r'<table[^>]*id="timetable"[^>]*>(.*?)</table>', html, re.S)
+          rows=re.findall(r'<tr[^>]*>(.*?)</tr>', m.group(1), re.S)
+          def txt(x):
+              t=re.sub(r'<br\s*/?>','\n',x); t=re.sub(r'<[^>]+>',' ',t)
+              t=re.sub(r'&nbsp;',' ',t); return re.sub(r'\s+',' ',t).strip()
+          SEC=re.compile(r'第(.)大节.*?\((\d+),(\d+)小节\)\s*(\d\d:\d\d)-(\d\d:\d\d)')
+          CN={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':7}
+          COURSE=re.compile(r'(\S+?)\s+([\u4e00-\u9fa5]{2,4})\s+(\d+)-(\d+)\(周\)\[([0-9\-]+)节\]\s*【([^】]+)】\s*(\S+)')
+          items=[]; seen=set()
+          for r_ in rows[1:]:
+              cs=re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', r_, re.S)
+              if len(cs)<8: continue
+              ms=SEC.search(txt(cs[0]))
+              if not ms: continue
+              tm1,tm2=ms.group(4),ms.group(5)
+              for day in range(1,8):
+                  cell=txt(cs[day])
+                  if not cell: continue
+                  for seg in re.split(r'-{4,}', cell):
+                      mm=COURSE.search(seg.strip())
+                      if not mm: continue
+                      name,teacher,w1,w2,secs,bld,room=mm.groups()
+                      sl=[int(x) for x in secs.split('-') if x.isdigit()]
+                      w1,w2=int(w1),int(w2)
+                      k=(name,day,tuple(sl),room,w1,w2)
+                      if k in seen: continue
+                      seen.add(k)
+                      items.append(dict(day=day,secs=sl,name=name,teacher=teacher,
+                                        room=room,bld=bld,time=f"{tm1}-{tm2}",
+                                        w1=w1,w2=w2))
+          print("  课程段 %d 条"%len(items))
+          if not items: raise SystemExit(1)
+
+          print("\n=== 3. 生成 weeks_cache.json ===")
+          weeks={}
+          for w in range(1,21):
+              arr=[]
+              for it in items:
+                  if not (it['w1']<=w<=it['w2']): continue
+                  arr.append({"day":it['day'],"secs":it['secs'],"name":it['name'],
+                              "teacher":it['teacher'],"room":it['room'],"bld":it['bld'],
+                              "time":it['time']})
+              weeks[str(w)]=arr
+          data={"weeks":weeks,"semester":semester,"current_week":current_week,
+                "ts":int(time.time()*1000),"src":"jw.hnsoftedu.com/jsxsd"}
+          txt_out=json.dumps(data,ensure_ascii=False)
+          print("  学期=%s 当前周=%d 20周总条目=%d"%(semester,current_week,
+                sum(len(v) for v in weeks.values())))
+          open("weeks_cache.json","w",encoding="utf-8").write(txt_out)
+
+          print("\n=== 4. 推送到 kebiao-page ===")
+          R2="WoShiYiGeManHuaJia/kebiao-page"
+          P="weeks_cache.json"
+          q=urllib.parse.quote(P,safe='')
+          sha=None
+          try:
+              d=json.load(urllib.request.urlopen(urllib.request.Request(
+                  'https://api.github.com/repos/%s/contents/%s?ref=main'%(R2,q),headers=H),timeout=120))
+              sha=d.get('sha')
+          except Exception: pass
+          pl={"message":"课表更新 %s 第%s周（教务直抓 %d 条）"%(semester,current_week,len(items)),
+              "content":base64.b64encode(txt_out.encode()).decode(),"branch":"main"}
+          if sha: pl["sha"]=sha
+          r=urllib.request.Request('https://api.github.com/repos/%s/contents/%s'%(R2,q),
+              data=json.dumps(pl).encode(),method="PUT",headers=H)
+          print("  -> %s"%json.load(urllib.request.urlopen(r,timeout=240))["commit"]["sha"][:8])
+
+          print("\n=== 明细 ===")
+          for it in sorted(items,key=lambda x:(x['w1'],x['day'])):
+              print("  周%2d-%-2d 星期%d 节%-14s %-22s %-5s %s"%(
+                  it['w1'],it['w2'],it['day'],str(it['secs']),it['name'],it['teacher'],it['room']))
+          PY
+          cat kbsync_out.txt
+          echo done
+        env:
+          KB_COOKIE: ${{ secrets.KB_COOKIE }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 保存
+        run: |
+          mkdir -p kbsync && cp kbsync_out.txt kbsync/out.txt
+          [ -f weeks_cache.json ] && cp weeks_cache.json kbsync/weeks_cache.json || true
+          git config user.name bot; git config user.email b@e.com
+          git add kbsync/ || true
+          git diff --cached --quiet || git commit -m "kbsync"
+          for i in 1 2 3; do git pull --rebase -q origin master && git push -q && break || sleep 5; done
