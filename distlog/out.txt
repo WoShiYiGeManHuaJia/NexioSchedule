@@ -2,7 +2,7 @@
   下载成功 3.16 MB
 
 === 2. 写入本仓库 app-release.apk ===
-  已提交 81a95413
+  已提交 82a00577
 
 === 3. 探测 jsDelivr 可达性 ===
   cdn.jsdelivr.net -> HTTP 200  3.16MB
