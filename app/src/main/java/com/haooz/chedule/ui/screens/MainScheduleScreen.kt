@@ -1369,10 +1369,13 @@ fun MainScheduleScreen(
         val detailContent: @Composable () -> Unit = {
             val scope = rememberCoroutineScope()
             val coursesToShow = remember(selectedCourses, selectedCourse, viewingWeek) {
-                val all = selectedCourses.ifEmpty { listOfNotNull(selectedCourse) }
-                // 只显示本周有课的，不再回退显示全部
-                val inWeek = all.filter { it.isActiveInWeek(viewingWeek) }
-                inWeek
+                // 注意：不要在这里再按 viewingWeek 过滤一次。
+                // selectedCourses 在点卡片时已按该格「当天实际显示的周次」过滤过
+                // （调休日那天用的是映射周次，与 viewingWeek 常常不同）；
+                // 这里若再按 viewingWeek 过滤，两个周次不一致时会把结果滤成空，
+                // 弹窗要么空白、要么退回显示全部（又出现「非本周」）。
+                // 极端情况下（过滤后为空）只显示被点击的那一条，绝不回退全部。
+                selectedCourses.ifEmpty { listOfNotNull(selectedCourse) }
                     .sortedWith(
                         compareByDescending<Course> { it.isActiveInWeek(viewingWeek) }
                             .thenBy {
