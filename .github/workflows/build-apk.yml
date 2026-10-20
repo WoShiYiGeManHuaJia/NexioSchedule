@@ -11,6 +11,12 @@ on:
 permissions:
   contents: write
 
+# 之前多个构建并发跑，先跑完的旧代码包会盖掉后跑完的新包。
+# 现在同一时间只允许一个构建，后来的排队等待，不取消（取消会丢产物）。
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -192,11 +198,32 @@ jobs:
           git config user.name "apk-bot"
           git config user.email "apk-bot@users.noreply.github.com"
           git add -f app-release.apk buildlog/fingerprint.txt
+          {
+            echo "=== git status ==="
+            git status --porcelain
+            echo "=== diff cached ==="
+            git diff --cached --stat
+          } > /tmp/gitinfo.txt 2>&1
           if git diff --cached --quiet; then
-            echo "APK 内容无变化，跳过提交"
+            echo "APK 内容无变化，跳过提交" >> /tmp/gitinfo.txt
           else
-            git commit -m "apk: $HEAD_SHA [skip ci]"
-            git push origin HEAD:master
-            echo "已提交仓库根目录 app-release.apk"
+            git commit -m "apk: $HEAD_SHA [skip ci]" >> /tmp/gitinfo.txt 2>&1
+            # 显式带 token 的 remote：默认的 origin 在 workflow 里 push 会静默失败
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+            git push origin HEAD:master >> /tmp/gitinfo.txt 2>&1
+            echo "push_exit=$?" >> /tmp/gitinfo.txt
           fi
+          cat /tmp/gitinfo.txt
+          # 小文件用 contents API 提交，方便外部核对（大 APK 走上面的 git push）
+          B64F=$(base64 -w 0 /tmp/gitinfo.txt)
+          SHAF=$(curl -sS -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/gitlog.txt" | jq -r '.sha // empty')
+          if [ -n "$SHAF" ]; then
+            JSONF=$(jq -n --arg c "$B64F" --arg s "$SHAF" '{message:"gitlog",content:$c,sha:$s}')
+          else
+            JSONF=$(jq -n --arg c "$B64F" '{message:"gitlog",content:$c}')
+          fi
+          curl -sS -X PUT -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/buildlog/gitlog.txt" -d "$JSONF" | head -c 200
+          echo ""
           echo "仓库内 md5: $(md5sum app-release.apk | cut -d' ' -f1)"
