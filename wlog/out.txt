@@ -1,9 +1,0 @@
-待试 token 数: 3
-=== 1. 探测可用 token ===
-   token#0 读=True
-
-=== 2. 上传 Worker 脚本 ===
-   token#0 异常 <HTTPError 403: 'Forbidden'>
-   token#1 异常 <HTTPError 403: 'Forbidden'>
-   token#2 异常 <HTTPError 403: 'Forbidden'>
-   所有 token 均无上传权限
