@@ -24,6 +24,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Restore signing keystore from Actions secret
+        env:
+          NEXIO_KEYSTORE_B64: ${{ secrets.NEXIO_KEYSTORE_B64 }}
+        run: |
+          mkdir -p keystore
+          printf '%s' "$NEXIO_KEYSTORE_B64" | base64 -d > keystore/softbig.jks
+          chmod 600 keystore/softbig.jks
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
